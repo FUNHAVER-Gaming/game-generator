@@ -74,6 +74,20 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 
 		member, err := botSession.State.Member(currentGuild.ID, user.ID)
 		role := member.Roles[0]
+
+		if len(member.Roles) > 1 {
+			for _, r := range member.Roles {
+				if r == ModRoleID {
+					continue
+				}
+				valRole := getValRoleFromRoleID(role)
+				if valRole == -1 {
+					continue
+				}
+				role = r
+			}
+		}
+
 		valRole := getValRoleFromRoleID(role)
 
 		if valRole == -1 {
