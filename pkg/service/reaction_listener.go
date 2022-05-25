@@ -17,26 +17,20 @@ func onReact(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 
 	reaction := m.MessageReaction
 
-	member, err := botSession.GuildMember(GuildID, m.UserID)
+	member, err := s.GuildMember(GuildID, m.UserID)
 	var role ValRole
 	switch strings.ToLower(reaction.Emoji.Name) {
 	case "sentinel":
 		role = Sentinel
 	case "initiator":
-		role = Flex
+		role = Initiator
 	case "controller":
 		role = Controller
 	case "duelist":
 		role = Duelist
 	}
 
-	newRoles := []string{role.getRoleId()}
-
-	for _, role := range member.Roles {
-		if role == ModRoleID {
-			newRoles = append(newRoles, ModRoleID)
-		}
-	}
+	newRoles := append(member.Roles, role.getRoleId())
 
 	err = s.GuildMemberEdit(GuildID, m.UserID, newRoles)
 	if err != nil {
@@ -50,14 +44,14 @@ func offReact(s *discordgo.Session, m *discordgo.MessageReactionRemove) {
 	}
 
 	reaction := m.MessageReaction
-	member, _ := botSession.GuildMember(GuildID, m.UserID)
+	member, _ := s.GuildMember(GuildID, m.UserID)
 
 	var role ValRole
 	switch strings.ToLower(reaction.Emoji.Name) {
 	case "sentinel":
 		role = Sentinel
 	case "initiator":
-		role = Flex
+		role = Initiator
 	case "controller":
 		role = Controller
 	case "duelist":
@@ -76,9 +70,4 @@ func offReact(s *discordgo.Session, m *discordgo.MessageReactionRemove) {
 		fmt.Println(err)
 	}
 
-}
-
-func removeRole(s []string, i int) []string {
-	s[i] = s[len(s)-1]
-	return s[:len(s)-1]
 }

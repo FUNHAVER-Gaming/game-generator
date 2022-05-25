@@ -73,45 +73,54 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 		}
 
 		member, err := botSession.State.Member(currentGuild.ID, user.ID)
-		role := member.Roles[0]
-
-		if len(member.Roles) > 1 {
-			for _, r := range member.Roles {
-				if r == ModRoleID {
-					continue
-				}
-				valRole := getValRoleFromRoleID(role)
-				if valRole == -1 {
-					continue
-				}
-				role = r
-			}
-		}
-
-		valRole := getValRoleFromRoleID(role)
-
-		if valRole == -1 {
-			sendError(fmt.Sprintf("Member %v has role %v, but it is not a valid ValRole", member.Nick, role), channel, botSession)
-			return
-		}
 
 		discUser := discordUser{
 			userId: user.ID,
 			nick:   member.Nick,
 		}
 
+		if len(member.Roles) >= 2 {
+			for _, r := range member.Roles {
+				if r == ModRoleID {
+					continue
+				}
+
+				valRole := getValRoleFromRoleID(r)
+				if valRole == -1 {
+					continue
+				}
+
+				switch valRole {
+				case Initiator:
+					flex = append(flex, discUser)
+				case Sentinel:
+					sentinels = append(sentinels, discUser)
+				case Controller:
+					controllers = append(controllers, discUser)
+				case Duelist:
+					duelists = append(duelists, discUser)
+				}
+			}
+		} else if len(member.Roles) == 1 {
+			valRole := getValRoleFromRoleID(member.Roles[0])
+			if valRole == -1 {
+				continue
+			}
+
+			switch valRole {
+			case Initiator:
+				flex = append(flex, discUser)
+			case Sentinel:
+				sentinels = append(sentinels, discUser)
+			case Controller:
+				controllers = append(controllers, discUser)
+			case Duelist:
+				duelists = append(duelists, discUser)
+			}
+		}
+
 		allPlayers = append(allPlayers, discUser)
 
-		switch valRole {
-		case Flex:
-			flex = append(flex, discUser)
-		case Sentinel:
-			sentinels = append(sentinels, discUser)
-		case Controller:
-			controllers = append(controllers, discUser)
-		case Duelist:
-			duelists = append(duelists, discUser)
-		}
 	}
 
 	team1, team2 := createTeams(controllers, flex, sentinels, duelists, allPlayers)
@@ -154,152 +163,4 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 	member, err := botSession.State.Member(currentGuild.ID, request.Author)
 	fmt.Printf("Sent teams message for channel %v (requested by %v)", channelNameFromId(request.ChannelID), member.Nick)
 	w.WriteHeader(http.StatusOK)
-}
-
-func createTeams(controllers []discordUser, flex []discordUser, sentinels []discordUser, duelists []discordUser, allPlayers []discordUser) ([]discordUser, []discordUser) {
-	var team1 []discordUser
-	var team2 []discordUser
-
-	totalDuelist := len(duelists)
-	totalFlex := len(flex)
-	totalSentinel := len(sentinels)
-	totalController := len(controllers)
-
-	r := rand.New(rand.NewSource(time.Now().Unix()))
-
-	//Team making logic
-	if totalFlex == OptimalFlex && totalController == OptimalController && totalDuelist == OptimalDuelist && totalSentinel == OptimalSentinel {
-		//Wow, this will never happen.
-
-		team1 = append(team1, controllers[0])
-		team2 = append(team2, controllers[1])
-
-		team1 = append(team1, flex[0])
-		team1 = append(team1, flex[2])
-		team2 = append(team2, flex[1])
-		team2 = append(team2, flex[3])
-
-		team1 = append(team1, sentinels[0])
-		team2 = append(team2, sentinels[1])
-
-		team1 = append(team1, duelists[0])
-		team2 = append(team2, duelists[1])
-	} else {
-		bothTeamsHaveController := false
-		//I hate nested ifs, but whatever
-
-		//Controller Block
-		/*
-			Priority: 2 controllers in queue, put one on each team
-					  1 controller in queue, more than 4 flexes, put 1 controller and 1 flex on each team
-					  0 controller in queue, more than 6 flexes, put 1 flex on both teams
-					  0 Controller in queue, less than 6 flexes, fuck em
-		*/
-
-		//So, lets check if we have 2 controllers, then go from there
-		if len(controllers) == 2 {
-			//Ok cool, get each team with a controller
-			team1 = append(team1, controllers[0])
-			team2 = append(team2, controllers[1])
-			bothTeamsHaveController = true
-		}
-
-		//OK, lets get a controller on each team but take from flex
-		if len(controllers) == 1 {
-			//Wow, one controller, try to find an excess of a role
-			if len(flex) > OptimalFlex {
-				//Yay, more flexes
-				index := r.Intn(len(flex))
-				flexNowController := flex[index]
-				team1 = append(team1, controllers[0])
-				team2 = append(team2, flexNowController)
-				remove(flex, index)
-				bothTeamsHaveController = true
-			}
-		}
-
-		if len(controllers) == 0 {
-			if len(flex) >= 6 {
-				index := r.Intn(len(flex))
-				team1 = append(team1, flex[index])
-				remove(flex, index)
-
-				index2 := r.Intn(len(flex))
-				team2 = append(team2, flex[index2])
-				remove(flex, index2)
-
-				bothTeamsHaveController = true
-			}
-		}
-
-		if !bothTeamsHaveController {
-			//Randomize teams from the main list
-			team1, team2 = randomSort(allPlayers, team1, team2)
-		} else {
-			//Put flex players onto teams
-			fmt.Println("Both teams have controllers, now putting rest on")
-			fmt.Println(fmt.Sprintf("Team 1: %v", team1))
-			fmt.Println(fmt.Sprintf("Team 2: %v", team2))
-			team1, team2 = randomSort(flex, team1, team2)
-
-			fmt.Println("Both teams have flexes, now putting duelists on")
-			fmt.Println(fmt.Sprintf("Team 1: %v", team1))
-			fmt.Println(fmt.Sprintf("Team 2: %v", team2))
-			team1, team2 = randomSort(duelists, team1, team2)
-
-			fmt.Println("Both teams have duelists, now putting sentinels on")
-			fmt.Println(fmt.Sprintf("Team 1: %v", team1))
-			fmt.Println(fmt.Sprintf("Team 2: %v", team2))
-			team1, team2 = randomSort(sentinels, team1, team2)
-
-			fmt.Println("All teams done")
-		}
-	}
-
-	//Fallback, randomize all teams
-	if len(team1) != len(team2) {
-		fmt.Println("Randomizing all 5 teams, because no balance was found")
-		rand.Shuffle(len(allPlayers), func(i, j int) {
-			allPlayers[i], allPlayers[j] = allPlayers[j], allPlayers[i]
-		})
-		team1 = allPlayers[0:4]
-		team2 = allPlayers[5:9]
-	}
-
-	return team1, team2
-}
-
-func randomSort(base []discordUser, team1 []discordUser, team2 []discordUser) ([]discordUser, []discordUser) {
-	rand.Shuffle(len(base), func(i, j int) {
-		base[i], base[j] = base[j], base[i]
-	})
-
-	lastTeamA := false
-	for _, user := range base {
-		if contains(team1, user) || contains(team2, user) {
-			continue
-		}
-		if !lastTeamA {
-			team1 = append(team1, user)
-			lastTeamA = true
-		} else {
-			team2 = append(team2, user)
-			lastTeamA = false
-		}
-	}
-	return team1, team2
-}
-
-func remove(s []discordUser, i int) []discordUser {
-	s[i] = s[len(s)-1]
-	return s[:len(s)-1]
-}
-
-func contains(s []discordUser, e discordUser) bool {
-	for _, a := range s {
-		if a.userId == e.userId {
-			return true
-		}
-	}
-	return false
 }

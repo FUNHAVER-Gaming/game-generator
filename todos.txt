@@ -1,0 +1,8 @@
+Multiple Roles for people
+    Tiered preference?
+    By map?
+
+Map ban system
+Server selection preference
+Manual ELO system
+Streamlined invite / vouch system

@@ -4,11 +4,11 @@ type ValRole int
 
 const (
 	Controller ValRole = 1
-	Flex       ValRole = 2
+	Initiator  ValRole = 2
 	Duelist    ValRole = 3
 	Sentinel   ValRole = 4
 
-	OptimalFlex       = 4
+	OptimalInitiator  = 4
 	OptimalDuelist    = 2
 	OptimalController = 2
 	OptimalSentinel   = 2
@@ -16,7 +16,7 @@ const (
 
 func (vr ValRole) getRoleId() string {
 	switch vr {
-	case Flex:
+	case Initiator:
 		return "978812462730207242"
 	case Controller:
 		return "978812366454136832"
@@ -33,7 +33,7 @@ func getValRoleFromRoleID(roleId string) ValRole {
 	case "978812366454136832":
 		return Controller
 	case "978812462730207242":
-		return Flex
+		return Initiator
 	case "978812420040573039":
 		return Duelist
 	case "978812511451250718":

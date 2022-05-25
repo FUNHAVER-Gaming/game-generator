@@ -11,10 +11,3 @@ func sendError(msg, channel string, s *discordgo.Session) {
 		fmt.Printf("error sending error message %v", err.Error())
 	}
 }
-
-func sendMessage(msg, channel string, s *discordgo.Session) {
-	_, err := s.ChannelMessageSend(channel, msg)
-	if err != nil {
-		fmt.Printf("error sending message %v", err.Error())
-	}
-}
