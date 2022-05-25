@@ -76,7 +76,7 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 		role := member.Roles[0]
 		valRole := getValRoleFromRoleID(role)
 
-		if len(valRole) == 0 {
+		if valRole == -1 {
 			sendError(fmt.Sprintf("Member %v has role %v, but it is not a valid ValRole", member.Nick, role), channel, botSession)
 			return
 		}

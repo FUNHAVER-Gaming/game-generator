@@ -1,18 +1,32 @@
 package service
 
-type ValRole string
+type ValRole int
 
 const (
-	Controller ValRole = "978812366454136832"
-	Flex       ValRole = "978812462730207242"
-	Duelist    ValRole = "978812420040573039"
-	Sentinel   ValRole = "978812511451250718"
+	Controller ValRole = 1
+	Flex       ValRole = 2
+	Duelist    ValRole = 3
+	Sentinel   ValRole = 4
 
 	OptimalFlex       = 4
 	OptimalDuelist    = 2
 	OptimalController = 2
 	OptimalSentinel   = 2
 )
+
+func (vr ValRole) getRoleId() string {
+	switch vr {
+	case Flex:
+		return "978812462730207242"
+	case Controller:
+		return "978812366454136832"
+	case Sentinel:
+		return "978812511451250718"
+	case Duelist:
+		return "978812420040573039"
+	}
+	return ""
+}
 
 func getValRoleFromRoleID(roleId string) ValRole {
 	switch roleId {
@@ -25,5 +39,5 @@ func getValRoleFromRoleID(roleId string) ValRole {
 	case "978812511451250718":
 		return Sentinel
 	}
-	return ""
+	return -1
 }
