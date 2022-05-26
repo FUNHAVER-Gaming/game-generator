@@ -3,6 +3,8 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/bwmarrin/discordgo"
+	"github.com/google/uuid"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -143,6 +145,7 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 
 	attackingMsg := ""
 	r := rand.New(rand.NewSource(time.Now().Unix()))
+
 	if r.Intn(100) >= 50 {
 		attackingMsg = "Team 1 is attack"
 	} else {
@@ -150,10 +153,29 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	lobbyLeader := allPlayers[r.Intn(len(allPlayers)-1)]
-	lobbyMsg := fmt.Sprintf("Lobby leader is %v", lobbyLeader.nick)
 
-	formattedMsg := fmt.Sprintf("%v | %v\n%v\n%v", team1msg, team2msg, attackingMsg, lobbyMsg)
-	_, err = botSession.ChannelMessageSend(request.ChannelID, formattedMsg)
+	fields := []*discordgo.MessageEmbedField{
+		{Name: "Team 1", Value: team1msg},
+		{Name: "Team 2", Value: team2msg},
+		{Name: "Attacking", Value: attackingMsg},
+		{Name: "Lobby Leader", Value: lobbyLeader.nick},
+		{Name: "Game ID", Value: fmt.Sprintf("||%v||", uuid.NewString())},
+	}
+
+	embed := &discordgo.MessageEmbed{
+		URL:         "http://localhost:8000",
+		Type:        discordgo.EmbedTypeArticle,
+		Title:       channelNameFromId(channel) + " Game Created",
+		Description: "",
+		Timestamp:   "",
+		Color:       0,
+		Author: &discordgo.MessageEmbedAuthor{
+			Name: "The FUNHAVER Bot",
+		},
+		Fields: fields,
+	}
+
+	_, err = botSession.ChannelMessageSendEmbed(channel, embed)
 
 	if err != nil {
 		fmt.Printf("error sending teams message %v", err.Error())

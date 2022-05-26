@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+func MakeTeams(controllers []discordUser, initiators []discordUser, sentinels []discordUser, duelists []discordUser, allPlayers []discordUser) ([]discordUser, []discordUser) {
+	return createTeams(controllers, initiators, sentinels, duelists, allPlayers)
+}
+
 func createTeams(controllers []discordUser, initiators []discordUser, sentinels []discordUser, duelists []discordUser, allPlayers []discordUser) ([]discordUser, []discordUser) {
 	var team1 []discordUser
 	var team2 []discordUser
