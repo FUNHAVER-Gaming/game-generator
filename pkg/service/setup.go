@@ -43,6 +43,7 @@ func Setup() {
 
 	dg.AddHandler(onReact)
 	dg.AddHandler(offReact)
+	dg.AddHandler(addTagEd)
 	botSession = dg
 	err = botSession.Open()
 	defer botSession.Close()

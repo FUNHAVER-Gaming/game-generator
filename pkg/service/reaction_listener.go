@@ -7,8 +7,34 @@ import (
 )
 
 const (
-	messageId = "978889651353956393"
+	messageId      = "978889651353956393"
+	tagEdMessageId = "979586371591213056"
+	tagEdRoleId    = "979585890018013184"
 )
+
+func addTagEd(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
+	if m.MessageID != tagEdMessageId {
+		return
+	}
+
+	member, err := s.GuildMember(GuildID, m.UserID)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	for _, role := range member.Roles {
+		if role == tagEdRoleId {
+			return
+		}
+	}
+
+	newRoles := append(member.Roles, tagEdRoleId)
+	err = s.GuildMemberEdit(GuildID, m.UserID, newRoles)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
 
 func onReact(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 	if m.MessageID != messageId {
