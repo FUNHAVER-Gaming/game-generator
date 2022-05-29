@@ -54,7 +54,7 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if len(request.VoiceChannelMembers) != 10 {
+	if len(request.VoiceChannelMembers) < 10 {
 		sendError(fmt.Sprintf("Did not find 10 users, only found %v", len(request.VoiceChannelMembers)), channel, botSession)
 		return
 	}
@@ -78,7 +78,7 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 
 		discUser := discordUser{
 			userId: user.ID,
-			nick:   member.Nick,
+			nick:   user.Username,
 		}
 
 		if len(member.Roles) >= 2 {
@@ -125,55 +125,66 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 
 	}
 
-	team1, team2 := createTeams(controllers, flex, sentinels, duelists, allPlayers)
-
-	team1msg := "Team 1: "
-	for i, user := range team1 {
-		team1msg += user.nick
-		if i != len(team1)-1 {
-			team1msg += ", "
-		}
-	}
-
-	team2msg := "Team 2: "
-	for i, user := range team2 {
-		team2msg += user.nick
-		if i != len(team2)-1 {
-			team2msg += ", "
-		}
-	}
-
-	attackingMsg := ""
+	team1attack := true
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 
 	if r.Intn(100) >= 50 {
-		attackingMsg = "Team 1 is attack"
+		team1attack = false
+	}
+
+	team1, team2 := createTeams(controllers, flex, sentinels, duelists, allPlayers)
+
+	t1players := ""
+	t2players := ""
+
+	team1msg := "Defenders: "
+	team2msg := "Defenders: "
+
+	if team1attack {
+		team1msg = "Attackers: "
 	} else {
-		attackingMsg = "Team 2 is attack"
+		team2msg = "Attackers: "
+	}
+
+	for i, user := range team1 {
+		t1players += user.nick
+		if i != len(team1)-1 {
+			t1players += ", "
+		}
+	}
+
+	for i, user := range team2 {
+		t2players += user.nick
+		if i != len(team2)-1 {
+			t2players += ", "
+		}
 	}
 
 	lobbyLeader := allPlayers[r.Intn(len(allPlayers)-1)]
 
 	fields := []*discordgo.MessageEmbedField{
-		{Name: "Team 1", Value: team1msg},
-		{Name: "Team 2", Value: team2msg},
-		{Name: "Attacking", Value: attackingMsg},
+		{Name: team1msg, Value: t1players},
+		{Name: team2msg, Value: t2players},
+		{Name: "Map", Value: chooseMap(channel)},
 		{Name: "Lobby Leader", Value: lobbyLeader.nick},
-		{Name: "Game ID", Value: fmt.Sprintf("||%v||", uuid.NewString())},
+		{Name: "ID", Value: fmt.Sprintf("||%v||", uuid.NewString())},
 	}
 
 	embed := &discordgo.MessageEmbed{
 		URL:         "http://localhost:8000",
-		Type:        discordgo.EmbedTypeArticle,
-		Title:       channelNameFromId(channel) + " Game Created",
-		Description: "",
-		Timestamp:   "",
-		Color:       0,
+		Type:        discordgo.EmbedTypeRich,
+		Title:       "game-1: Game Created",
+		Description: "New FUNHAVER Gaming Ranked Game",
+		Timestamp:   time.Now().Format(time.RFC3339),
+		Color:       24,
 		Author: &discordgo.MessageEmbedAuthor{
 			Name: "The FUNHAVER Bot",
 		},
 		Fields: fields,
 	}
+
+	fmt.Println(team1msg)
+	fmt.Println(team2msg)
 
 	_, err = botSession.ChannelMessageSendEmbed(channel, embed)
 

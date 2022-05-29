@@ -1,14 +1,23 @@
 package main
 
+import (
+	"fmt"
+	"github.com/bwmarrin/discordgo"
+	"github.com/google/uuid"
+	"math/rand"
+	"time"
+	"valorant-league/pkg/service"
+)
+
 func main() {
-	/*dg, err := discordgo.New("Bot " + service.DiscordToken)
+	dg, err := discordgo.New("Bot " + service.DiscordToken)
 
 	if err != nil {
 		fmt.Println("error creating Discord session,", err)
 		return
 	}
 
-	team1 := []string{"vox", "jovi", "mini", "ion", "tim"}
+	team1 := []string{"dar3st", "jovi", "mini", "ion", "tim"}
 
 	team1msg := "Team 1: "
 	for i, user := range team1 {
@@ -59,19 +68,19 @@ func main() {
 	}
 
 	_, err = dg.ChannelMessageSendEmbed(service.Game1ID, embed)
-	resp, err := dg.ChannelMessages(service.Game1ID, 100, "", "", "")
+	/*	resp, err := dg.ChannelMessages(service.Game1ID, 100, "", "", "")
 
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
 
-	var ids []string
+		var ids []string
 
-	for _, msg := range resp {
-		ids = append(ids, msg.ID)
-	}
+		for _, msg := range resp {
+			ids = append(ids, msg.ID)
+		}
 
-	err = dg.ChannelMessagesBulkDelete(service.Game1ID, ids)*/
+		err = dg.ChannelMessagesBulkDelete(service.Game1ID, ids)*/
 
 }
