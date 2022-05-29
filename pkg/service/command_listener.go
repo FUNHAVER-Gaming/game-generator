@@ -213,6 +213,6 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	member, err := botSession.State.Member(currentGuild.ID, request.Author)
-	fmt.Printf("Sent teams message for channel %v (requested by %v)", channelNameFromId(request.ChannelID), member.Nick)
+	fmt.Printf("Sent teams message for channel %v (requested by %v)", channelNameFromId(request.ChannelID), member.User.Username)
 	w.WriteHeader(http.StatusOK)
 }
