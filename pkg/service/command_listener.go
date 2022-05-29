@@ -37,9 +37,6 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	jsonRequest, _ := json.Marshal(&request)
-	fmt.Println(string(jsonRequest))
-
 	channel := request.ChannelID
 	voiceChannel := getVoiceChannelByTextChannel(channel)
 
@@ -195,8 +192,8 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 	embed := &discordgo.MessageEmbed{
 		URL:         "http://localhost:8000",
 		Type:        discordgo.EmbedTypeRich,
-		Title:       "game-1: Game Created",
-		Description: "New FUNHAVER Gaming Ranked Game",
+		Title:       fmt.Sprintf("Lobby %v - Game Created", channelNameFromId(channel)),
+		Description: "New FUNHAVER Gaming Game",
 		Timestamp:   time.Now().Format(time.RFC3339),
 		Color:       24,
 		Author: &discordgo.MessageEmbedAuthor{
