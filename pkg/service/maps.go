@@ -20,21 +20,25 @@ var (
 
 func chooseMap(channel string) string {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	m := maps[r.Intn(len(maps)-1)]
-	iteration := 0
-	logWithArgs("Maps len %v", len(maps))
-	for ok := false; ok; ok = mapWasPlayed(channel, m) {
-		logWithArgs("ok %v, iteration #%v", ok, iteration)
-		m = maps[r.Intn(len(maps)-1)]
-		logWithArgs("Map chosen %v", m)
-		iteration++
-		if iteration >= len(maps) {
-			logWithArgs("Iteration equal maps, resetting")
-			//All maps have been played
-			playedMaps[channel] = []string{}
-			break
+	var tempMaps []string
+	tempMaps = append(tempMaps, maps...)
+	pm := playedMaps[channel]
+
+	for _, mp := range pm {
+		for index, tm := range tempMaps {
+			if mp == tm {
+				tempMaps = removeStringFromSlice(tempMaps, index)
+			}
 		}
 	}
+
+	if len(tempMaps) == 0 {
+		tempMaps = append(tempMaps, maps...)
+		playedMaps[channel] = []string{}
+	}
+
+	index := r.Intn(len(tempMaps) - 1)
+	m := tempMaps[index]
 
 	playMap(channel, m)
 	return m
@@ -42,7 +46,6 @@ func chooseMap(channel string) string {
 
 func mapWasPlayed(channel, m string) bool {
 	mp := playedMaps[channel]
-
 	if len(mp) == 0 {
 		return false
 	}
@@ -58,9 +61,6 @@ func mapWasPlayed(channel, m string) bool {
 
 func playMap(channel, m string) {
 	mp := playedMaps[channel]
-	logWithArgs("PLAYMAP: Maps played %v", mp)
 	mp = append(mp, m)
-	logWithArgs("PLAYMAP: Appended %v", mp)
 	playedMaps[channel] = mp
-	logWithArgs("PLAYMAP: Re-added %v", playedMaps[channel])
 }

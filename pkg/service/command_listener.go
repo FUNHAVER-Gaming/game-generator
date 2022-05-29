@@ -71,10 +71,16 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 
 		if err != nil {
 			sendError(err.Error(), channel, botSession)
-			return
+			continue
 		}
 
 		member, err := botSession.State.Member(currentGuild.ID, user.ID)
+
+		if err != nil {
+			fmt.Println(err.Error())
+			sendError(fmt.Sprintf("Member %v, made error %v", user.Username, err.Error()), channel, botSession)
+			continue
+		}
 
 		discUser := discordUser{
 			userId: user.ID,

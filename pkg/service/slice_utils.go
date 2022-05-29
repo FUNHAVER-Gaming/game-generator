@@ -5,6 +5,11 @@ func remove(s []discordUser, i int) []discordUser {
 	return s[:len(s)-1]
 }
 
+func removeStringFromSlice(s []string, i int) []string {
+	s[i] = s[len(s)-1]
+	return s[:len(s)-1]
+}
+
 func removeUser(s []discordUser, e discordUser) []discordUser {
 	indexToRemove := -1
 	for index, a := range s {
