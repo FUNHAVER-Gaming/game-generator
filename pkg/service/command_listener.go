@@ -95,6 +95,7 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 			nick:   user.Username,
 		}
 
+		hasValRole := false
 		if len(member.Roles) >= 2 {
 			for _, r := range member.Roles {
 				if r == ModRoleID {
@@ -106,6 +107,7 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 					continue
 				}
 
+				hasValRole = true
 				switch valRole {
 				case Initiator:
 					flex = append(flex, discUser)
@@ -120,9 +122,11 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 		} else if len(member.Roles) == 1 {
 			valRole := getValRoleFromRoleID(member.Roles[0])
 			if valRole == -1 {
+				sendError(fmt.Sprintf("Member %v, does not have a valid valorant role", user.Username), channel, botSession)
 				continue
 			}
 
+			hasValRole = true
 			switch valRole {
 			case Initiator:
 				flex = append(flex, discUser)
@@ -133,6 +137,10 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 			case Duelist:
 				duelists = append(duelists, discUser)
 			}
+		}
+
+		if !hasValRole {
+			sendError(fmt.Sprintf("Member %v, does not have a valid valorant role, adding him anyway", user.Username), channel, botSession)
 		}
 
 		allPlayers = append(allPlayers, discUser)
