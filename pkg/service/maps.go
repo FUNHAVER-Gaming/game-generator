@@ -41,7 +41,7 @@ func chooseMap(channel string) string {
 	m := tempMaps[index]
 
 	playMap(channel, m)
-	return m
+	return strings.ToTitle(m)
 }
 
 func mapWasPlayed(channel, m string) bool {
