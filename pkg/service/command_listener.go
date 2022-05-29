@@ -77,9 +77,17 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 		member, err := botSession.State.Member(currentGuild.ID, user.ID)
 
 		if err != nil {
-			fmt.Println(err.Error())
-			sendError(fmt.Sprintf("Member %v, made error %v", user.Username, err.Error()), channel, botSession)
-			continue
+			if err == discordgo.ErrStateNotFound {
+				member, err = botSession.GuildMember(currentGuild.ID, user.ID)
+				if err != nil {
+					sendError(fmt.Sprintf("Member %v, had error %v", user.Username, err.Error()), channel, botSession)
+					return
+				}
+			} else {
+				fmt.Println(err.Error())
+				sendError(fmt.Sprintf("Member %v, had error %v", user.Username, err.Error()), channel, botSession)
+				continue
+			}
 		}
 
 		discUser := discordUser{
@@ -188,9 +196,6 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 		},
 		Fields: fields,
 	}
-
-	fmt.Println(team1msg)
-	fmt.Println(team2msg)
 
 	_, err = botSession.ChannelMessageSendEmbed(channel, embed)
 
