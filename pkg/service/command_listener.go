@@ -24,6 +24,7 @@ func init() {
 type discordUser struct {
 	userId string
 	nick   string
+	roles  []string
 }
 
 func newGameHandler(w http.ResponseWriter, req *http.Request) {

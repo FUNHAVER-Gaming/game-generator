@@ -38,6 +38,7 @@ func convertVCMembersToUsers(request *models.NewGame, msgIdsToRemove []string, c
 		discUser := discordUser{
 			userId: user.User.ID,
 			nick:   user.User.Username,
+			roles:  user.Roles,
 		}
 
 		role := InvalidRole
@@ -78,7 +79,11 @@ func convertVCMembersToUsers(request *models.NewGame, msgIdsToRemove []string, c
 			duelists = append(duelists, discUser)
 		}
 
-		allPlayers = append(allPlayers, discUser)
+		if !obs {
+			allPlayers = append(allPlayers, discUser)
+		} else {
+			sendMessage(fmt.Sprintf("%v has Observer / Caster Role, and was taken into consideration for team gen", discUser.nick), channel)
+		}
 	}
 
 	if len(allPlayers) > 10 {
