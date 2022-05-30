@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
+	"github.com/jellydator/ttlcache/v3"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -12,6 +13,16 @@ import (
 	"time"
 	"valorant-league/pkg/models"
 )
+
+var (
+	cache = ttlcache.New[string, string](
+		ttlcache.WithTTL[string, string](10 * time.Second),
+	)
+)
+
+func init() {
+	go cache.Start() // starts automatic expired item deletion
+}
 
 type discordUser struct {
 	userId string
@@ -249,8 +260,10 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		member, err := botSession.State.Member(currentGuild.ID, request.Author)
-		fmt.Printf("Sent teams message for channel %v (requested by %v)", channelNameFromId(request.ChannelID), member.User.Username)
+		go func() {
+			member, _ := botSession.State.Member(currentGuild.ID, request.Author)
+			fmt.Printf("Sent teams message for channel %v (requested by %v)", channelNameFromId(request.ChannelID), member.User.Username)
+		}()
 
 		go func() {
 			time.Sleep(5 * time.Minute)

@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+	"github.com/bwmarrin/discordgo"
 	"math/rand"
 )
 
@@ -18,7 +20,23 @@ func randomSortAndShuffleToNew(baseList []discordUser, roleFunc func(role ValRol
 
 	//Assign to secondary roles
 	for _, user := range baseList {
-		member, _ := botSession.GuildMember(GuildID, user.userId)
+		member, err := botSession.State.Member(GuildID, user.userId)
+
+		if err != nil {
+			if err == discordgo.ErrStateNotFound {
+				member, err = botSession.GuildMember(GuildID, user.userId)
+				if err != nil {
+					fmt.Println("Error getting guild member: " + err.Error())
+					return
+				}
+			} else {
+				fmt.Println(err.Error())
+				continue
+			}
+		} else {
+			member, _ = botSession.GuildMember(GuildID, user.userId)
+		}
+
 		roles := member.Roles
 
 		for _, role := range roles {

@@ -32,8 +32,6 @@ func chooseMap(channel string) string {
 		}
 	}
 
-	logWithArgs("tempMaps %v (len %v)", tempMaps, len(tempMaps))
-
 	m := ""
 
 	if len(tempMaps) == 1 {
