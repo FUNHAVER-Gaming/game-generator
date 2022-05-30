@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net/http"
+	"sync"
 	"time"
 	"valorant-league/pkg/models"
 )
@@ -38,69 +39,122 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	channel := request.ChannelID
-	voiceChannel := getVoiceChannelByTextChannel(channel)
-
-	if len(voiceChannel) == 0 {
-		sendError("No voice channel found for this text channel", channel, botSession)
+	if len(channel) == 0 {
+		http.Error(w, "channel is empty", http.StatusBadRequest)
 		return
 	}
 
-	currentGuild, err := botSession.Guild(GuildID)
-	if err != nil {
-		sendError(err.Error(), channel, botSession)
-		return
-	}
+	var msgIdsToRemove []string
 
-	if len(request.VoiceChannelMembers) < 10 {
-		sendError(fmt.Sprintf("Did not find 10 users, only found %v", len(request.VoiceChannelMembers)), channel, botSession)
-		return
-	}
+	msgIdsToRemove = append(msgIdsToRemove, sendMessage("Creating game, please wait...", channel))
 
-	var allPlayers []discordUser
+	var wg sync.WaitGroup
+	wg.Add(1)
 
-	var controllers []discordUser
-	var flex []discordUser
-	var sentinels []discordUser
-	var duelists []discordUser
+	go func() {
+		defer wg.Done()
+		r := rand.New(rand.NewSource(time.Now().Unix()))
+		voiceChannel := getVoiceChannelByTextChannel(channel)
 
-	for _, member := range request.VoiceChannelMembers {
-		user, err := botSession.User(member)
-
-		if err != nil {
-			sendError(err.Error(), channel, botSession)
-			continue
+		if len(voiceChannel) == 0 {
+			sendError("No voice channel found for this text channel", channel)
+			return
 		}
 
-		member, err := botSession.State.Member(currentGuild.ID, user.ID)
-
+		currentGuild, err := botSession.Guild(GuildID)
 		if err != nil {
-			if err == discordgo.ErrStateNotFound {
-				member, err = botSession.GuildMember(currentGuild.ID, user.ID)
-				if err != nil {
-					sendError(fmt.Sprintf("Member %v, had error %v", user.Username, err.Error()), channel, botSession)
-					return
-				}
-			} else {
-				fmt.Println(err.Error())
-				sendError(fmt.Sprintf("Member %v, had error %v", user.Username, err.Error()), channel, botSession)
+			sendError(err.Error(), channel)
+			return
+		}
+
+		if len(request.VoiceChannelMembers) < 10 {
+			sendError(fmt.Sprintf("Did not find 10 users, only found %v", len(request.VoiceChannelMembers)), channel)
+			return
+		}
+
+		var allPlayers []discordUser
+
+		var controllers []discordUser
+		var flex []discordUser
+		var sentinels []discordUser
+		var duelists []discordUser
+
+		msgIdsToRemove = append(msgIdsToRemove, sendMessage("Getting members from VC and their roles", channel))
+		msgIdsToRemove = append(msgIdsToRemove, sendMessage(fmt.Sprintf("Found %v total VC members", len(allPlayers)), channel))
+		vcMembers := request.VoiceChannelMembers
+
+		if len(vcMembers) > 10 {
+			playersToRemove := len(allPlayers) - 10
+			msgIdsToRemove = append(msgIdsToRemove, sendMessage(fmt.Sprintf("There are an excess number of players, randomly removing %v players", playersToRemove), channel))
+			var namesRemoved []string
+
+			for i := 0; i < playersToRemove; i++ {
+				index := r.Intn(len(vcMembers) - 1)
+				playerToRemove := vcMembers[index]
+				vcMembers = removeStringFromSlice(vcMembers, index)
+				namesRemoved = append(namesRemoved, playerToRemove)
+			}
+
+			msgIdsToRemove = append(msgIdsToRemove, sendMessage(fmt.Sprintf("Players NOT playing %v", namesRemoved), channel))
+		}
+
+		for _, member := range vcMembers {
+			user, err := botSession.User(member)
+
+			if err != nil {
+				sendError(err.Error(), channel)
 				continue
 			}
-		}
 
-		discUser := discordUser{
-			userId: user.ID,
-			nick:   user.Username,
-		}
+			member, err := botSession.State.Member(currentGuild.ID, user.ID)
 
-		hasValRole := false
-		if len(member.Roles) >= 2 {
-			for _, r := range member.Roles {
-				if r == ModRoleID {
+			if err != nil {
+				if err == discordgo.ErrStateNotFound {
+					member, err = botSession.GuildMember(currentGuild.ID, user.ID)
+					if err != nil {
+						sendError(fmt.Sprintf("Member %v, had error %v", user.Username, err.Error()), channel)
+						return
+					}
+				} else {
+					fmt.Println(err.Error())
+					sendError(fmt.Sprintf("Member %v, had error %v", user.Username, err.Error()), channel)
 					continue
 				}
+			}
 
-				valRole := getValRoleFromRoleID(r)
+			discUser := discordUser{
+				userId: user.ID,
+				nick:   user.Username,
+			}
+
+			hasValRole := false
+			if len(member.Roles) >= 2 {
+				for _, r := range member.Roles {
+					if r == ModRoleID {
+						continue
+					}
+
+					valRole := getValRoleFromRoleID(r)
+					if valRole == -1 {
+						continue
+					}
+
+					hasValRole = true
+					switch valRole {
+					case Initiator:
+						flex = append(flex, discUser)
+					case Sentinel:
+						sentinels = append(sentinels, discUser)
+					case Controller:
+						controllers = append(controllers, discUser)
+					case Duelist:
+						duelists = append(duelists, discUser)
+					}
+				}
+			} else if len(member.Roles) == 1 {
+				valRole := getValRoleFromRoleID(member.Roles[0])
 				if valRole == -1 {
+					sendError(fmt.Sprintf("Member %v, does not have a valid valorant role", user.Username), channel)
 					continue
 				}
 
@@ -116,100 +170,107 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 					duelists = append(duelists, discUser)
 				}
 			}
-		} else if len(member.Roles) == 1 {
-			valRole := getValRoleFromRoleID(member.Roles[0])
-			if valRole == -1 {
-				sendError(fmt.Sprintf("Member %v, does not have a valid valorant role", user.Username), channel, botSession)
-				continue
+
+			if !hasValRole {
+				sendError(fmt.Sprintf("Member %v, does not have a valid valorant role, adding him anyway", user.Username), channel)
 			}
 
-			hasValRole = true
-			switch valRole {
-			case Initiator:
-				flex = append(flex, discUser)
-			case Sentinel:
-				sentinels = append(sentinels, discUser)
-			case Controller:
-				controllers = append(controllers, discUser)
-			case Duelist:
-				duelists = append(duelists, discUser)
+			allPlayers = append(allPlayers, discUser)
+		}
+
+		team1attack := true
+
+		if r.Intn(100) >= 50 {
+			team1attack = false
+		}
+
+		msgIdsToRemove = append(msgIdsToRemove, sendMessage("Players and roles have been mapped, creating teams", channel))
+		start := time.Now().UnixNano() / int64(time.Millisecond)
+		team1, team2 := createTeams(controllers, flex, sentinels, duelists, allPlayers)
+		time.Sleep(1 * time.Second)
+		end := time.Now().UnixNano() / int64(time.Millisecond)
+		diff := end - start
+
+		msgIdsToRemove = append(msgIdsToRemove, sendMessage(fmt.Sprintf("Created teams, took %vms", diff), channel))
+
+		t1players := ""
+		t2players := ""
+
+		team1msg := "Defenders: "
+		team2msg := "Defenders: "
+
+		if team1attack {
+			team1msg = "Attackers: "
+		} else {
+			team2msg = "Attackers: "
+		}
+
+		for i, user := range team1 {
+			t1players += user.nick
+			if i != len(team1)-1 {
+				t1players += ", "
 			}
 		}
 
-		if !hasValRole {
-			sendError(fmt.Sprintf("Member %v, does not have a valid valorant role, adding him anyway", user.Username), channel, botSession)
+		for i, user := range team2 {
+			t2players += user.nick
+			if i != len(team2)-1 {
+				t2players += ", "
+			}
 		}
 
-		allPlayers = append(allPlayers, discUser)
+		lobbyLeader := allPlayers[r.Intn(len(allPlayers)-1)]
 
-	}
-
-	team1attack := true
-	r := rand.New(rand.NewSource(time.Now().Unix()))
-
-	if r.Intn(100) >= 50 {
-		team1attack = false
-	}
-
-	team1, team2 := createTeams(controllers, flex, sentinels, duelists, allPlayers)
-
-	t1players := ""
-	t2players := ""
-
-	team1msg := "Defenders: "
-	team2msg := "Defenders: "
-
-	if team1attack {
-		team1msg = "Attackers: "
-	} else {
-		team2msg = "Attackers: "
-	}
-
-	for i, user := range team1 {
-		t1players += user.nick
-		if i != len(team1)-1 {
-			t1players += ", "
+		fields := []*discordgo.MessageEmbedField{
+			{Name: team1msg, Value: t1players},
+			{Name: team2msg, Value: t2players},
+			{Name: "Map", Value: chooseMap(channel)},
+			{Name: "Lobby Leader", Value: lobbyLeader.nick},
+			{Name: "ID", Value: fmt.Sprintf("||%v||", uuid.NewString())},
 		}
-	}
 
-	for i, user := range team2 {
-		t2players += user.nick
-		if i != len(team2)-1 {
-			t2players += ", "
+		embed := &discordgo.MessageEmbed{
+			URL:         "http://localhost:8000",
+			Type:        discordgo.EmbedTypeRich,
+			Title:       fmt.Sprintf("Lobby %v - Game Created", channelNameFromId(channel)),
+			Description: "New FUNHAVER Gaming Game",
+			Timestamp:   time.Now().Format(time.RFC3339),
+			Color:       24,
+			Author: &discordgo.MessageEmbedAuthor{
+				Name: "The FUNHAVER Bot",
+			},
+			Fields: fields,
 		}
-	}
 
-	lobbyLeader := allPlayers[r.Intn(len(allPlayers)-1)]
+		_, err = botSession.ChannelMessageSendEmbed(channel, embed)
 
-	fields := []*discordgo.MessageEmbedField{
-		{Name: team1msg, Value: t1players},
-		{Name: team2msg, Value: t2players},
-		{Name: "Map", Value: chooseMap(channel)},
-		{Name: "Lobby Leader", Value: lobbyLeader.nick},
-		{Name: "ID", Value: fmt.Sprintf("||%v||", uuid.NewString())},
-	}
+		if err != nil {
+			fmt.Printf("error sending teams message %v", err.Error())
+			return
+		}
 
-	embed := &discordgo.MessageEmbed{
-		URL:         "http://localhost:8000",
-		Type:        discordgo.EmbedTypeRich,
-		Title:       fmt.Sprintf("Lobby %v - Game Created", channelNameFromId(channel)),
-		Description: "New FUNHAVER Gaming Game",
-		Timestamp:   time.Now().Format(time.RFC3339),
-		Color:       24,
-		Author: &discordgo.MessageEmbedAuthor{
-			Name: "The FUNHAVER Bot",
-		},
-		Fields: fields,
-	}
+		member, err := botSession.State.Member(currentGuild.ID, request.Author)
+		fmt.Printf("Sent teams message for channel %v (requested by %v)", channelNameFromId(request.ChannelID), member.User.Username)
 
-	_, err = botSession.ChannelMessageSendEmbed(channel, embed)
+		go func() {
+			time.Sleep(5 * time.Minute)
+			msgIdsToRemove = append(msgIdsToRemove, sendMessage("Deleting system messages", channel))
+			var removedCleaned []string
 
-	if err != nil {
-		fmt.Printf("error sending teams message %v", err.Error())
-		return
-	}
+			for _, m := range msgIdsToRemove {
+				if len(m) == 0 {
+					continue
+				}
+				removedCleaned = append(removedCleaned, m)
+			}
 
-	member, err := botSession.State.Member(currentGuild.ID, request.Author)
-	fmt.Printf("Sent teams message for channel %v (requested by %v)", channelNameFromId(request.ChannelID), member.User.Username)
+			err := botSession.ChannelMessagesBulkDelete(channel, removedCleaned)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+		}()
+	}()
+
+	wg.Wait()
 	w.WriteHeader(http.StatusOK)
 }

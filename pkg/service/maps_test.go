@@ -25,10 +25,10 @@ func Test_chooseMap(t *testing.T) {
 			return false
 		}},
 		{before: func(c string) {
-			for i := 0; i < 2; i++ {
+			for i := 0; i < len(maps); i++ {
 				fmt.Println("Chose map (before): " + chooseMap(c))
 			}
-		}, name: "Map test, multiple played", channel: "game-1", want: func(s string) bool {
+		}, name: "Map test, all played", channel: "game-1", want: func(s string) bool {
 			if len(s) == 0 {
 				return false
 			}

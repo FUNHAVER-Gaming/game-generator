@@ -32,13 +32,19 @@ func chooseMap(channel string) string {
 		}
 	}
 
-	if len(tempMaps) == 0 {
+	logWithArgs("tempMaps %v (len %v)", tempMaps, len(tempMaps))
+
+	m := ""
+
+	if len(tempMaps) == 1 {
+		m = tempMaps[0]
+		tempMaps = []string{}
 		tempMaps = append(tempMaps, maps...)
 		playedMaps[channel] = []string{}
+	} else {
+		index := r.Intn(len(tempMaps) - 1)
+		m = tempMaps[index]
 	}
-
-	index := r.Intn(len(tempMaps) - 1)
-	m := tempMaps[index]
 
 	playMap(channel, m)
 	return strings.ToTitle(m)
