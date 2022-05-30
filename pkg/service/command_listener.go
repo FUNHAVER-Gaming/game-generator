@@ -61,12 +61,14 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if cache.Get(author) != nil {
-		http.Error(w, "too many requests from the same author in the same channel", http.StatusBadRequest)
-		return
+	if value := cache.Get(author); value != nil {
+		if value.Value() == channel && !value.IsExpired() {
+			sendError("You have sent too many requests, please wait.", channel)
+			return
+		}
 	}
 
-	cache.Set(author, time.Now().Format(time.RFC3339), 10*time.Second)
+	cache.Set(author, channel, 10*time.Second)
 
 	var msgIdsToRemove []string
 	msgIdsToRemove = append(msgIdsToRemove, sendMessage("Creating game, please wait...", channel))
