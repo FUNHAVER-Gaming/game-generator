@@ -23,6 +23,7 @@ func randomSortAndShuffleToNew(baseList []discordUser, roleFunc func(role ValRol
 		member, err := botSession.State.Member(GuildID, user.userId)
 
 		if err != nil {
+			logWithArgs("Player %v was not found in cache, performing REST", user.nick)
 			if err == discordgo.ErrStateNotFound {
 				member, err = botSession.GuildMember(GuildID, user.userId)
 				if err != nil {
@@ -33,8 +34,11 @@ func randomSortAndShuffleToNew(baseList []discordUser, roleFunc func(role ValRol
 				fmt.Println(err.Error())
 				continue
 			}
-		} else {
-			member, _ = botSession.GuildMember(GuildID, user.userId)
+		}
+
+		if member == nil {
+			logWithArgs("Player %v was not found in cache OR rest", user.nick)
+			return
 		}
 
 		roles := member.Roles
