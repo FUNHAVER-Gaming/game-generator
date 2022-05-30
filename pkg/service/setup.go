@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"time"
+	"valorant-league/pkg/health"
 )
 
 const (
@@ -61,6 +62,7 @@ func Setup() {
 		r := mux.NewRouter()
 		fmt.Println("Creating path mapping")
 		r.HandleFunc("/newGame", newGameHandler).Methods(http.MethodPost)
+		r.HandleFunc("/health", health.Check).Methods(http.MethodGet)
 
 		srv := &http.Server{
 			Handler:      r,
