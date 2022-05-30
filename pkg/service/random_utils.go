@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"github.com/bwmarrin/discordgo"
 	"math/rand"
 )
 
@@ -20,24 +19,10 @@ func randomSortAndShuffleToNew(baseList []discordUser, roleFunc func(role ValRol
 
 	//Assign to secondary roles
 	for _, user := range baseList {
-		member, err := botSession.State.Member(GuildID, user.userId)
+		member, err := getMember(user.userId)
 
 		if err != nil {
-			logWithArgs("Player %v was not found in cache, performing REST", user.nick)
-			if err == discordgo.ErrStateNotFound {
-				member, err = botSession.GuildMember(GuildID, user.userId)
-				if err != nil {
-					fmt.Println("Error getting guild member: " + err.Error())
-					return
-				}
-			} else {
-				fmt.Println(err.Error())
-				continue
-			}
-		}
-
-		if member == nil {
-			logWithArgs("Player %v was not found in cache OR rest", user.nick)
+			fmt.Println("Error getting guild member: " + err.Error())
 			return
 		}
 

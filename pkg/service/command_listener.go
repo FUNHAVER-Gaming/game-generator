@@ -103,7 +103,8 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 				index := r.Intn(len(vcMembers) - 1)
 				playerToRemove := vcMembers[index]
 				vcMembers = removeStringFromSlice(vcMembers, index)
-				namesRemoved = append(namesRemoved, playerToRemove)
+				member, _ := getMember(playerToRemove)
+				namesRemoved = append(namesRemoved, member.User.Username)
 			}
 
 			msgIdsToRemove = append(msgIdsToRemove, sendMessage(fmt.Sprintf("Players NOT playing %v", namesRemoved), channel))
@@ -117,21 +118,7 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 				continue
 			}
 
-			member, err := botSession.State.Member(currentGuild.ID, user.ID)
-
-			if err != nil {
-				if err == discordgo.ErrStateNotFound {
-					member, err = botSession.GuildMember(currentGuild.ID, user.ID)
-					if err != nil {
-						sendError(fmt.Sprintf("Member %v, had error %v", user.Username, err.Error()), channel)
-						return
-					}
-				} else {
-					fmt.Println(err.Error())
-					sendError(fmt.Sprintf("Member %v, had error %v", user.Username, err.Error()), channel)
-					continue
-				}
-			}
+			member, err := getMember(user.ID)
 
 			discUser := discordUser{
 				userId: user.ID,
