@@ -27,7 +27,6 @@ func sendMessage(msg, channel string) string {
 func deleteMessage(channel, id string, ttl time.Duration) {
 	go func() {
 		time.Sleep(ttl)
-		logWithArgs("Deleting message ID %v in channel %v", id, channel)
 		err := botSession.ChannelMessageDelete(channel, id)
 		if err != nil {
 			fmt.Println(err.Error())
