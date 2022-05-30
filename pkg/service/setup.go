@@ -41,9 +41,11 @@ func Setup() {
 		return
 	}
 
+	fmt.Println("Creating handlers")
 	dg.AddHandler(onReact)
 	dg.AddHandler(offReact)
 	dg.AddHandler(addTagEd)
+	fmt.Println("Handlers created, opening bot session")
 	botSession = dg
 	err = botSession.Open()
 	defer botSession.Close()
@@ -53,8 +55,11 @@ func Setup() {
 		return
 	}
 
+	fmt.Println("Opened bot session, starting router")
+
 	go func() {
 		r := mux.NewRouter()
+		fmt.Println("Creating path mapping")
 		r.HandleFunc("/newGame", newGameHandler).Methods(http.MethodPost)
 
 		srv := &http.Server{
@@ -64,6 +69,7 @@ func Setup() {
 			ReadTimeout:  15 * time.Second,
 		}
 
+		fmt.Println("Serving REST server")
 		log.Fatal(srv.ListenAndServe())
 	}()
 
