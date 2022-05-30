@@ -33,3 +33,23 @@ func deleteMessage(channel, id string, ttl time.Duration) {
 		}
 	}()
 }
+
+func deleteMessagesBulk(msgIdsToRemove []string, channel string) {
+	go func() {
+		time.Sleep(5 * time.Minute)
+		msgIdsToRemove = append(msgIdsToRemove, sendMessage("Deleting system messages", channel))
+		var removedCleaned []string
+
+		for _, m := range msgIdsToRemove {
+			if len(m) == 0 {
+				continue
+			}
+			removedCleaned = append(removedCleaned, m)
+		}
+
+		err := botSession.ChannelMessagesBulkDelete(channel, removedCleaned)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	}()
+}

@@ -73,6 +73,8 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 	var msgIdsToRemove []string
 	msgIdsToRemove = append(msgIdsToRemove, sendMessage("Creating game, please wait...", channel))
 
+	defer deleteMessagesBulk(msgIdsToRemove, channel)
+
 	var wg sync.WaitGroup
 	wg.Add(1)
 
@@ -170,23 +172,6 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		go func() {
-			time.Sleep(5 * time.Minute)
-			msgIdsToRemove = append(msgIdsToRemove, sendMessage("Deleting system messages", channel))
-			var removedCleaned []string
-
-			for _, m := range msgIdsToRemove {
-				if len(m) == 0 {
-					continue
-				}
-				removedCleaned = append(removedCleaned, m)
-			}
-
-			err := botSession.ChannelMessagesBulkDelete(channel, removedCleaned)
-			if err != nil {
-				fmt.Println(err.Error())
-			}
-		}()
 	}()
 
 	wg.Wait()
