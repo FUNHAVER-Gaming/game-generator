@@ -72,7 +72,6 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		currentGuild, err := botSession.Guild(GuildID)
 		if err != nil {
 			sendError(err.Error(), channel)
 			return
@@ -246,11 +245,6 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 			fmt.Printf("error sending teams message %v", err.Error())
 			return
 		}
-
-		go func() {
-			member, _ := botSession.State.Member(currentGuild.ID, request.Author)
-			fmt.Printf("Sent teams message for channel %v (requested by %v)", channelNameFromId(request.ChannelID), member.User.Username)
-		}()
 
 		go func() {
 			time.Sleep(5 * time.Minute)
