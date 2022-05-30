@@ -36,7 +36,7 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 	err := decoder.Decode(&request)
 
 	if err != nil {
-		fmt.Println("failed to sign in user")
+		fmt.Println("failed to decode NewGame request")
 		body, err := ioutil.ReadAll(req.Body)
 
 		if err != nil {
@@ -54,6 +54,8 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "channel is empty", http.StatusBadRequest)
 		return
 	}
+
+	cache.Set(channel)
 
 	var msgIdsToRemove []string
 
@@ -90,12 +92,12 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 		var sentinels []discordUser
 		var duelists []discordUser
 
-		msgIdsToRemove = append(msgIdsToRemove, sendMessage("Getting members from VC and their roles", channel))
-		msgIdsToRemove = append(msgIdsToRemove, sendMessage(fmt.Sprintf("Found %v total VC members", len(allPlayers)), channel))
 		vcMembers := request.VoiceChannelMembers
+		msgIdsToRemove = append(msgIdsToRemove, sendMessage("Getting members from VC and their roles", channel))
+		msgIdsToRemove = append(msgIdsToRemove, sendMessage(fmt.Sprintf("Found %v total VC members", len(vcMembers)), channel))
 
 		if len(vcMembers) > 10 {
-			playersToRemove := len(allPlayers) - 10
+			playersToRemove := len(vcMembers) - 10
 			msgIdsToRemove = append(msgIdsToRemove, sendMessage(fmt.Sprintf("There are an excess number of players, randomly removing %v players", playersToRemove), channel))
 			var namesRemoved []string
 
