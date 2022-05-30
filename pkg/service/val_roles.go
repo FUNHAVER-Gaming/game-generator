@@ -3,10 +3,11 @@ package service
 type ValRole int
 
 const (
-	Controller ValRole = 1
-	Initiator  ValRole = 2
-	Duelist    ValRole = 3
-	Sentinel   ValRole = 4
+	Controller  ValRole = 1
+	Initiator   ValRole = 2
+	Duelist     ValRole = 3
+	Sentinel    ValRole = 4
+	InvalidRole ValRole = -1
 
 	OptimalInitiator  = 4
 	OptimalDuelist    = 2
@@ -39,5 +40,5 @@ func getValRoleFromRoleID(roleId string) ValRole {
 	case "978812511451250718":
 		return Sentinel
 	}
-	return -1
+	return InvalidRole
 }

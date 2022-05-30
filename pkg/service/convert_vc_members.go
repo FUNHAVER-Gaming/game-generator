@@ -40,52 +40,42 @@ func convertVCMembersToUsers(request *models.NewGame, msgIdsToRemove []string, c
 			nick:   user.User.Username,
 		}
 
-		hasValRole := false
-		if len(user.Roles) >= 2 {
-			for _, r := range user.Roles {
-				if r == ModRoleID {
-					continue
-				}
+		role := InvalidRole
+		obs := false
 
-				valRole := getValRoleFromRoleID(r)
-				if valRole == -1 {
-					continue
-				}
-
-				hasValRole = true
-				switch valRole {
-				case Initiator:
-					flex = append(flex, discUser)
-				case Sentinel:
-					sentinels = append(sentinels, discUser)
-				case Controller:
-					controllers = append(controllers, discUser)
-				case Duelist:
-					duelists = append(duelists, discUser)
-				}
-			}
-		} else if len(user.Roles) == 1 {
-			valRole := getValRoleFromRoleID(user.Roles[0])
-			if valRole == -1 {
-				sendError(fmt.Sprintf("Member %v, does not have a valid valorant role", user.User.Username), channel)
+		for _, r := range user.Roles {
+			if r == ModRoleID {
 				continue
 			}
 
-			hasValRole = true
-			switch valRole {
-			case Initiator:
-				flex = append(flex, discUser)
-			case Sentinel:
-				sentinels = append(sentinels, discUser)
-			case Controller:
-				controllers = append(controllers, discUser)
-			case Duelist:
-				duelists = append(duelists, discUser)
+			if r == ObserverRoleID {
+				obs = true
+				break
 			}
+
+			role = getValRoleFromRoleID(r)
+
+			if role == InvalidRole {
+				continue
+			}
+
+			break
 		}
 
-		if !hasValRole {
-			sendError(fmt.Sprintf("Member %v, does not have a valid valorant role, adding him anyway", user.User.Username), channel)
+		if role == InvalidRole && !obs {
+			sendError(fmt.Sprintf("Member %v, does not have a valid valorant role", user.User.Username), channel)
+			continue
+		}
+
+		switch role {
+		case Initiator:
+			flex = append(flex, discUser)
+		case Sentinel:
+			sentinels = append(sentinels, discUser)
+		case Controller:
+			controllers = append(controllers, discUser)
+		case Duelist:
+			duelists = append(duelists, discUser)
 		}
 
 		allPlayers = append(allPlayers, discUser)

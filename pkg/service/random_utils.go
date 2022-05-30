@@ -30,7 +30,7 @@ func randomSortAndShuffleToNew(baseList []discordUser, roleFunc func(role ValRol
 
 		for _, role := range roles {
 			//Remove any non valorant based roles
-			if getValRoleFromRoleID(role) == -1 {
+			if getValRoleFromRoleID(role) == InvalidRole {
 				continue
 			}
 			vr := getValRoleFromRoleID(role)
