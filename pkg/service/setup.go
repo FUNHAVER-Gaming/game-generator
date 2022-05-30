@@ -12,17 +12,6 @@ import (
 	"valorant-league/pkg/health"
 )
 
-const (
-	GuildID      = "978805942122602556"
-	DiscordToken = "OTc4ODEzMDg3ODA3MzA3ODE2.GBwsSE.8aHPukkL0z0ltGujudjJmtf1gMuwXEFY0mk1FU"
-	Game1ID      = "978808082123604078"
-	Game2ID      = "978808103942357022"
-	Game3ID      = "978808171726508052"
-	Game4ID      = "978808119025082398"
-	Game5ID      = "978808224134332467"
-	ModRoleID    = "978896260687859733"
-)
-
 var (
 	botSession                   *discordgo.Session
 	voiceChannelToTextChannelMap = map[string]string{

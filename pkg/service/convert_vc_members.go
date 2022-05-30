@@ -21,40 +21,28 @@ func convertVCMembersToUsers(request *models.NewGame, msgIdsToRemove []string, c
 	msgIdsToRemove = append(msgIdsToRemove, sendMessage("Getting members from VC and their roles", channel))
 	msgIdsToRemove = append(msgIdsToRemove, sendMessage(fmt.Sprintf("Found %v total VC members", len(vcMembers)), channel))
 
-	if len(vcMembers) > 10 {
-		playersToRemove := len(vcMembers) - 10
-		msgIdsToRemove = append(msgIdsToRemove, sendMessage(fmt.Sprintf("There are an excess number of players, randomly removing %v players", playersToRemove), channel))
-		var namesRemoved []string
-
-		for i := 0; i < playersToRemove; i++ {
-			index := r.Intn(len(vcMembers) - 1)
-			playerToRemove := vcMembers[index]
+	for index, mem := range vcMembers {
+		if mem == JoviPCUserId {
 			vcMembers = removeStringFromSlice(vcMembers, index)
-			member, _ := getMember(playerToRemove)
-			namesRemoved = append(namesRemoved, member.User.Username)
 		}
-
-		msgIdsToRemove = append(msgIdsToRemove, sendMessage(fmt.Sprintf("Players NOT playing %v", namesRemoved), channel))
 	}
 
 	for _, member := range vcMembers {
-		user, err := botSession.User(member)
+		user, err := getMember(member)
 
 		if err != nil {
 			sendError(err.Error(), channel)
 			continue
 		}
 
-		member, err := getMember(user.ID)
-
 		discUser := discordUser{
-			userId: user.ID,
-			nick:   user.Username,
+			userId: user.User.ID,
+			nick:   user.User.Username,
 		}
 
 		hasValRole := false
-		if len(member.Roles) >= 2 {
-			for _, r := range member.Roles {
+		if len(user.Roles) >= 2 {
+			for _, r := range user.Roles {
 				if r == ModRoleID {
 					continue
 				}
@@ -76,10 +64,10 @@ func convertVCMembersToUsers(request *models.NewGame, msgIdsToRemove []string, c
 					duelists = append(duelists, discUser)
 				}
 			}
-		} else if len(member.Roles) == 1 {
-			valRole := getValRoleFromRoleID(member.Roles[0])
+		} else if len(user.Roles) == 1 {
+			valRole := getValRoleFromRoleID(user.Roles[0])
 			if valRole == -1 {
-				sendError(fmt.Sprintf("Member %v, does not have a valid valorant role", user.Username), channel)
+				sendError(fmt.Sprintf("Member %v, does not have a valid valorant role", user.User.Username), channel)
 				continue
 			}
 
@@ -97,10 +85,62 @@ func convertVCMembersToUsers(request *models.NewGame, msgIdsToRemove []string, c
 		}
 
 		if !hasValRole {
-			sendError(fmt.Sprintf("Member %v, does not have a valid valorant role, adding him anyway", user.Username), channel)
+			sendError(fmt.Sprintf("Member %v, does not have a valid valorant role, adding him anyway", user.User.Username), channel)
 		}
 
 		allPlayers = append(allPlayers, discUser)
 	}
+
+	if len(allPlayers) > 10 {
+		playersToRemove := len(allPlayers) - 10
+		msgIdsToRemove = append(msgIdsToRemove, sendMessage(fmt.Sprintf("There are an excess number of players, randomly removing %v players", playersToRemove), channel))
+		var namesRemoved []string
+		var possibles []discordUser
+
+		if len(duelists) > 4 {
+			possibles = append(possibles, duelists...)
+		}
+
+		if len(flex) > 6 {
+			possibles = append(possibles, flex...)
+		}
+
+		if len(sentinels) > 3 {
+			possibles = append(possibles, sentinels...)
+		}
+
+		if len(controllers) > 3 {
+			possibles = append(possibles, controllers...)
+		}
+
+		var toRemoveFrom []discordUser
+
+		if len(possibles) < playersToRemove {
+			//IE, not enough possible overflows
+			toRemoveFrom = append(toRemoveFrom, allPlayers...)
+		} else {
+			toRemoveFrom = append(toRemoveFrom, possibles...)
+		}
+
+		for i := 0; i < playersToRemove; i++ {
+			index := r.Intn(len(toRemoveFrom) - 1)
+			playerToRemove := toRemoveFrom[index]
+			toRemoveFrom = remove(toRemoveFrom, index)
+			namesRemoved = append(namesRemoved, playerToRemove.nick)
+		}
+
+		//Look, this isn't probably the best way of doing this, but lets be real, they are tiny objects
+		//And their len will never be insane, this may take an extra 20ms or so, but I know its robust
+		for _, r := range toRemoveFrom {
+			for index, a := range allPlayers {
+				if r.userId == a.userId {
+					allPlayers = remove(allPlayers, index)
+				}
+			}
+		}
+
+		msgIdsToRemove = append(msgIdsToRemove, sendMessage(fmt.Sprintf("Players NOT playing %v", namesRemoved), channel))
+	}
+
 	return allPlayers, controllers, flex, sentinels, duelists, msgIdsToRemove
 }
