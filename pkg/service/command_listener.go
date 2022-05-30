@@ -55,8 +55,6 @@ func newGameHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	cache.Set(channel)
-
 	var msgIdsToRemove []string
 
 	msgIdsToRemove = append(msgIdsToRemove, sendMessage("Creating game, please wait...", channel))
