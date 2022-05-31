@@ -109,12 +109,19 @@ func convertVCMembersToUsers(request *models.NewGame, msgIdsToRemove []string, c
 		}
 
 		var toRemoveFrom []discordUser
+		logWithArgs("All Players len %v", len(allPlayers))
+		logWithArgs("Controller Players len %v", len(controllers))
+		logWithArgs("Flex Players len %v", len(flex))
+		logWithArgs("Sentinel Players len %v", len(sentinels))
+		logWithArgs("Duelist Players len %v", len(duelists))
 
 		if len(possibles) < playersToRemove {
 			//IE, not enough possible overflows
-			toRemoveFrom = append(toRemoveFrom, allPlayers...)
+			toRemoveFrom = allPlayers
+			fmt.Println("Removing from allPlayers")
 		} else {
-			toRemoveFrom = append(toRemoveFrom, possibles...)
+			toRemoveFrom = possibles
+			fmt.Println("Removing from possibles")
 		}
 
 		for i := 0; i < playersToRemove; i++ {
@@ -122,25 +129,21 @@ func convertVCMembersToUsers(request *models.NewGame, msgIdsToRemove []string, c
 			playerToRemove := toRemoveFrom[index]
 			toRemoveFrom = remove(toRemoveFrom, index)
 			namesRemoved = append(namesRemoved, playerToRemove.nick)
+
+			duelists = removeUser(duelists, playerToRemove)
+			controllers = removeUser(controllers, playerToRemove)
+			flex = removeUser(flex, playerToRemove)
+			sentinels = removeUser(sentinels, playerToRemove)
+
+			allPlayers = removeUser(allPlayers, playerToRemove)
 		}
 
 		logWithArgs("Names removed %v", namesRemoved)
 		logWithArgs("All Players len %v", len(allPlayers))
-
-		for _, n := range namesRemoved {
-			for index, a := range allPlayers {
-				if a.nick == n {
-					logWithArgs("Removing player %v", n)
-					allPlayers = remove(allPlayers, index)
-					break
-				}
-			}
-		}
-
-		//Look, this isn't probably the best way of doing this, but lets be real, they are tiny objects
-		//And their len will never be insane, this may take an extra 20ms or so, but I know its robust
-
-		logWithArgs("All Players len %v", len(allPlayers))
+		logWithArgs("Controller Players len %v", len(controllers))
+		logWithArgs("Flex Players len %v", len(flex))
+		logWithArgs("Sentinel Players len %v", len(sentinels))
+		logWithArgs("Duelist Players len %v", len(duelists))
 
 		msgIdsToRemove = append(msgIdsToRemove, sendMessage(fmt.Sprintf("Players NOT playing %v", namesRemoved), channel))
 	}

@@ -42,9 +42,7 @@ func printTeams(team1 []discordUser, team2 []discordUser, allPlayers []discordUs
 		}
 	}
 
-	logWithArgs("PRINT TEAMS: All Players Len %v", len(allPlayers))
 	index := r.Intn(len(allPlayers) - 1)
-	logWithArgs("PRINT TEAMS: Index %v", index)
 	lobbyLeader := allPlayers[index]
 
 	fields := []*discordgo.MessageEmbedField{

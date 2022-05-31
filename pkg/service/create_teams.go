@@ -146,7 +146,7 @@ func createTeams(controllers []discordUser, initiators []discordUser, sentinels 
 	}
 
 	//OK, finally, for some reason, we couldn't fill all teams. Take the players left and sort them
-	logWithArgs("Could NOT create properly balanced teams based of roles, despite our best efforts.")
+	logWithArgs("Could NOT create properly balanced teams based off roles, despite our best efforts.")
 	return randomSort(allPlayers, team1, team2)
 }
 
