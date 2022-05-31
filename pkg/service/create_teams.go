@@ -97,6 +97,7 @@ func createTeams(controllers []discordUser, initiators []discordUser, sentinels 
 		}
 
 		//Now we check on duelists
+		logWithArgs("Total Duelists %v", len(duelists))
 		if len(duelists) > 2 {
 			//Wow, more duelists than needed? _shocked_
 			randomSortAndShuffleToNew(duelists, func(role ValRole, user discordUser) {
@@ -119,6 +120,7 @@ func createTeams(controllers []discordUser, initiators []discordUser, sentinels 
 		}
 
 		//Finally, sentinels
+		logWithArgs("Total Duelists %v", len(sentinels))
 		if len(sentinels) > 2 {
 			randomSortAndShuffleToNew(sentinels, func(role ValRole, user discordUser) {
 				logWithArgs("SENTINEL: Placing %v on %v", user.nick, role.getName())
@@ -135,6 +137,8 @@ func createTeams(controllers []discordUser, initiators []discordUser, sentinels 
 			//Otherwise, in this case, it doesn't matter which team they go to
 		}
 	}
+
+	logWithArgs("Total Duelists %v", len(initiators))
 
 	//OK, initiators. These are easier as they should've been already filtered out through everything above
 	team1, team2 = randomSort(initiators, team1, team2)
