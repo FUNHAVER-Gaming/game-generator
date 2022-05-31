@@ -123,9 +123,9 @@ func createTeams(controllers []discordUser, initiators []discordUser, sentinels 
 		logWithArgs("Total Duelists %v", len(sentinels))
 		if len(sentinels) > 2 {
 			randomSortAndShuffleToNew(sentinels, func(role ValRole, user discordUser) {
-				logWithArgs("SENTINEL: Placing %v on %v", user.nick, role.getName())
 				switch role {
 				case Initiator:
+					logWithArgs("SENTINEL: Placing %v on %v", user.nick, role.getName())
 					initiators = append(initiators, user)
 				}
 			}, team1, team2)
