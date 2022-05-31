@@ -35,6 +35,10 @@ func contains(s []discordUser, e discordUser) bool {
 	return false
 }
 
+func isOnTeam(e discordUser) bool {
+	return e.hasTeam
+}
+
 func removeRole(s []string, i int) []string {
 	s[i] = s[len(s)-1]
 	return s[:len(s)-1]
