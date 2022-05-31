@@ -1,10 +1,11 @@
 package service
 
 import (
+	"github.com/FUNHAVER-Gaming/game-generator/pkg/models"
 	"math/rand"
 )
 
-func randomSortAndShuffleToNew(baseList []discordUser, roleFunc func(role ValRole, user discordUser), team1 []discordUser, team2 []discordUser) {
+func randomSortAndShuffleToNew(baseList []*models.Player, roleFunc func(role ValRole, user *models.Player), team1 []*models.Player, team2 []*models.Player) {
 	rand.Shuffle(len(baseList), func(i, j int) {
 		baseList[i], baseList[j] = baseList[j], baseList[i]
 	})
@@ -18,7 +19,7 @@ func randomSortAndShuffleToNew(baseList []discordUser, roleFunc func(role ValRol
 
 	//Assign to secondary roles
 	for _, member := range baseList {
-		roles := member.roles
+		roles := member.Roles
 
 		for _, role := range roles {
 			//Remove any non valorant based roles
@@ -31,13 +32,13 @@ func randomSortAndShuffleToNew(baseList []discordUser, roleFunc func(role ValRol
 	}
 }
 
-func randomSort(base []discordUser, team1 []discordUser, team2 []discordUser) ([]discordUser, []discordUser) {
+func randomSort(base []*models.Player, team1 []*models.Player, team2 []*models.Player) ([]*models.Player, []*models.Player) {
 	rand.Shuffle(len(base), func(i, j int) {
 		base[i], base[j] = base[j], base[i]
 	})
 
 	for _, user := range base {
-		if isOnTeam(user) {
+		if contains(team1, user) || contains(team2, user) {
 			continue
 		}
 

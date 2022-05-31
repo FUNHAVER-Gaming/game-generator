@@ -1,59 +1,52 @@
 package service
 
 import (
-	"fmt"
+	"github.com/FUNHAVER-Gaming/game-generator/pkg/data"
+	"github.com/FUNHAVER-Gaming/game-generator/pkg/models"
+	"github.com/FUNHAVER-Gaming/game-generator/pkg/proto"
+	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"time"
-	"valorant-league/pkg/models"
 )
 
-func convertVCMembersToUsers(request *models.NewGame, msgIdsToRemove []string, channel string) ([]discordUser, []discordUser, []discordUser, []discordUser, []discordUser, []string) {
+type vcMembersResp struct {
+	allPlayers           []*models.Player
+	controllers          []*models.Player
+	initiators           []*models.Player
+	sentinels            []*models.Player
+	duelists             []*models.Player
+	excessPlayersRemoved []*proto.Player
+}
+
+func convertVCMembersToUsers(request *proto.CreateGameRequest) (*vcMembersResp, error) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 
-	var allPlayers []discordUser
+	var allPlayers []*models.Player
 
-	var controllers []discordUser
-	var flex []discordUser
-	var sentinels []discordUser
-	var duelists []discordUser
+	var controllers []*models.Player
+	var flex []*models.Player
+	var sentinels []*models.Player
+	var duelists []*models.Player
+	var excessPlayers []*proto.Player
 
 	vcMembers := request.VoiceChannelMembers
-	msgIdsToRemove = append(msgIdsToRemove, sendMessage("Getting members from VC and their roles", channel))
-	msgIdsToRemove = append(msgIdsToRemove, sendMessage(fmt.Sprintf("Found %v total VC members", len(vcMembers)), channel))
-
-	for index, mem := range vcMembers {
-		if mem == JoviPcUserId {
-			vcMembers = removeStringFromSlice(vcMembers, index)
-		}
-	}
 
 	for _, member := range vcMembers {
-		user, err := getMember(member)
+		discUser, err := data.GetPlayer(member.Id)
 
 		if err != nil {
-			sendError(err.Error(), channel)
-			continue
+			log.WithError(err).Errorf("failed to get player %v from DB", member.DisplayName)
+			return nil, err
 		}
 
-		discUser := discordUser{
-			userId: user.User.ID,
-			nick:   user.User.Username,
-			roles:  user.Roles,
+		if len(discUser.Roles) != len(member.Roles) {
+			discUser.Roles = member.Roles
+			go data.UpdateRoles(discUser)
 		}
 
 		role := InvalidRole
-		obs := false
 
-		for _, r := range user.Roles {
-			if r == ModRoleID {
-				continue
-			}
-
-			if r == ObserverRoleID {
-				obs = true
-				break
-			}
-
+		for _, r := range member.Roles {
 			role = getValRoleFromRoleID(r)
 
 			if role == InvalidRole {
@@ -63,8 +56,7 @@ func convertVCMembersToUsers(request *models.NewGame, msgIdsToRemove []string, c
 			break
 		}
 
-		if role == InvalidRole && !obs {
-			sendError(fmt.Sprintf("Member %v, does not have a valid valorant role", user.User.Username), channel)
+		if role == InvalidRole {
 			continue
 		}
 
@@ -79,18 +71,13 @@ func convertVCMembersToUsers(request *models.NewGame, msgIdsToRemove []string, c
 			duelists = append(duelists, discUser)
 		}
 
-		if !obs {
-			allPlayers = append(allPlayers, discUser)
-		} else {
-			sendMessage(fmt.Sprintf("%v has Observer / Caster Role, and was taken into consideration for team gen", discUser.nick), channel)
-		}
+		allPlayers = append(allPlayers, discUser)
 	}
 
 	if len(allPlayers) > 10 {
 		playersToRemove := len(allPlayers) - 10
-		msgIdsToRemove = append(msgIdsToRemove, sendMessage(fmt.Sprintf("There are an excess number of players, randomly removing %v players", playersToRemove), channel))
 		var namesRemoved []string
-		var possibles []discordUser
+		var possibles []*models.Player
 
 		if len(duelists) > 4 {
 			possibles = append(possibles, duelists...)
@@ -108,27 +95,19 @@ func convertVCMembersToUsers(request *models.NewGame, msgIdsToRemove []string, c
 			possibles = append(possibles, controllers...)
 		}
 
-		var toRemoveFrom []discordUser
-		logWithArgs("All Players len %v", len(allPlayers))
-		logWithArgs("Controller Players len %v", len(controllers))
-		logWithArgs("Flex Players len %v", len(flex))
-		logWithArgs("Sentinel Players len %v", len(sentinels))
-		logWithArgs("Duelist Players len %v", len(duelists))
+		var toRemoveFrom []*models.Player
 
 		if len(possibles) < playersToRemove {
-			//IE, not enough possible overflows
 			toRemoveFrom = allPlayers
-			fmt.Println("Removing from allPlayers")
 		} else {
 			toRemoveFrom = possibles
-			fmt.Println("Removing from possibles")
 		}
 
 		for i := 0; i < playersToRemove; i++ {
 			index := r.Intn(len(toRemoveFrom) - 1)
 			playerToRemove := toRemoveFrom[index]
 			toRemoveFrom = remove(toRemoveFrom, index)
-			namesRemoved = append(namesRemoved, playerToRemove.nick)
+			namesRemoved = append(namesRemoved, playerToRemove.DiscordUserName)
 
 			duelists = removeUser(duelists, playerToRemove)
 			controllers = removeUser(controllers, playerToRemove)
@@ -136,17 +115,22 @@ func convertVCMembersToUsers(request *models.NewGame, msgIdsToRemove []string, c
 			sentinels = removeUser(sentinels, playerToRemove)
 
 			allPlayers = removeUser(allPlayers, playerToRemove)
+			excessPlayers = append(excessPlayers, &proto.Player{
+				DiscordId:   playerToRemove.DiscordID,
+				DisplayName: playerToRemove.DiscordUserName,
+				UserId:      playerToRemove.UserID,
+				RiotId:      playerToRemove.RiotId,
+				RiotTag:     playerToRemove.RiotTag,
+			})
 		}
-
-		logWithArgs("Names removed %v", namesRemoved)
-		logWithArgs("All Players len %v", len(allPlayers))
-		logWithArgs("Controller Players len %v", len(controllers))
-		logWithArgs("Flex Players len %v", len(flex))
-		logWithArgs("Sentinel Players len %v", len(sentinels))
-		logWithArgs("Duelist Players len %v", len(duelists))
-
-		msgIdsToRemove = append(msgIdsToRemove, sendMessage(fmt.Sprintf("Players NOT playing %v", namesRemoved), channel))
 	}
 
-	return allPlayers, controllers, flex, sentinels, duelists, msgIdsToRemove
+	return &vcMembersResp{
+		allPlayers:           allPlayers,
+		controllers:          controllers,
+		initiators:           flex,
+		sentinels:            sentinels,
+		duelists:             duelists,
+		excessPlayersRemoved: excessPlayers,
+	}, nil
 }

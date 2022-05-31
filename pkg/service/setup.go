@@ -2,67 +2,33 @@ package service
 
 import (
 	"fmt"
+	"github.com/FUNHAVER-Gaming/game-generator/pkg/health"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gorilla/mux"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
-	"valorant-league/pkg/health"
-)
-
-const (
-	GuildID        = "978805942122602556"
-	DiscordToken   = "OTc4ODEzMDg3ODA3MzA3ODE2.GBwsSE.8aHPukkL0z0ltGujudjJmtf1gMuwXEFY0mk1FU"
-	Game1ID        = "978808082123604078"
-	Game2ID        = "978808103942357022"
-	Game3ID        = "978808171726508052"
-	Game4ID        = "978808119025082398"
-	Game5ID        = "978808224134332467"
-	ModRoleID      = "978896260687859733"
-	ObserverRoleID = "fsdff"
 )
 
 var (
-	botSession                   *discordgo.Session
-	voiceChannelToTextChannelMap = map[string]string{
-		Game1ID: "978807561795026964",
-		Game2ID: "978807838438719508",
-		Game3ID: "978807822865293332",
-		Game4ID: "978807716392882197",
-		Game5ID: "978807859997450271",
-	}
+	botSession *discordgo.Session
 )
 
 func Setup() {
-	dg, err := discordgo.New("Bot " + DiscordToken)
-
-	if err != nil {
-		fmt.Println("error creating Discord session,", err)
-		return
-	}
-
-	fmt.Println("Creating handlers")
-	dg.AddHandler(onReact)
-	dg.AddHandler(offReact)
-	dg.AddHandler(addTagEd)
-	fmt.Println("Handlers created, opening bot session")
-	botSession = dg
-	err = botSession.Open()
-	defer botSession.Close()
-
-	if err != nil {
-		fmt.Println("error opening connection:", err)
-		return
-	}
-
-	fmt.Println("Opened bot session, starting router")
+	go func() {
+		log.Info("Starting gRPC (no error next means good)")
+		err := StartServer(199091)
+		if err != nil {
+			log.WithError(err).Error("could not start grpc server")
+			return
+		}
+	}()
 
 	go func() {
+		log.Info("Starting mux for health check")
 		r := mux.NewRouter()
-		fmt.Println("Creating path mapping")
-		r.HandleFunc("/newGame", newGameHandler).Methods(http.MethodPost)
 		r.HandleFunc("/health", health.Check).Methods(http.MethodGet)
 
 		srv := &http.Server{
@@ -81,24 +47,4 @@ func Setup() {
 	<-stop
 
 	fmt.Println("Gracefully shutting down")
-}
-
-func getVoiceChannelByTextChannel(channel string) string {
-	return voiceChannelToTextChannelMap[channel]
-}
-
-func channelNameFromId(channelId string) string {
-	switch channelId {
-	case "978808082123604078":
-		return "game-1"
-	case "978808103942357022":
-		return "game-2"
-	case "978808171726508052":
-		return "game-3"
-	case "978808119025082398":
-		return "game-4"
-	case "978808224134332467":
-		return "game-5"
-	}
-	return ""
 }

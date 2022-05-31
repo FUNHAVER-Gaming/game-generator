@@ -1,14 +1,14 @@
 package service
 
 import (
-	"fmt"
+	"github.com/FUNHAVER-Gaming/game-generator/pkg/models"
 	"math/rand"
 	"time"
 )
 
-func createTeams(controllers []discordUser, initiators []discordUser, sentinels []discordUser, duelists []discordUser, allPlayers []discordUser) ([]discordUser, []discordUser) {
-	var team1 []discordUser
-	var team2 []discordUser
+func createTeams(controllers []*models.Player, initiators []*models.Player, sentinels []*models.Player, duelists []*models.Player, allPlayers []*models.Player) ([]*models.Player, []*models.Player) {
+	var team1 []*models.Player
+	var team2 []*models.Player
 
 	totalDuelist := len(duelists)
 	totalInitiator := len(initiators)
@@ -20,7 +20,6 @@ func createTeams(controllers []discordUser, initiators []discordUser, sentinels 
 	//Team making logic
 	if totalInitiator == OptimalInitiator && totalController == OptimalController && totalDuelist == OptimalDuelist && totalSentinel == OptimalSentinel {
 		//Wow, this will never happen.
-		fmt.Println("Perfecto")
 		team1 = addPlayerToTeam(team1, controllers[0])
 		team2 = addPlayerToTeam(team2, controllers[1])
 
@@ -47,23 +46,19 @@ func createTeams(controllers []discordUser, initiators []discordUser, sentinels 
 
 		//If we have an excess of controllers, lets go ahead the fill controller teams, and move them to their secondary choice
 		if len(controllers) > 2 {
-			fmt.Println(">2 controllers")
-			randomSortAndShuffleToNew(controllers, func(role ValRole, user discordUser) {
+			randomSortAndShuffleToNew(controllers, func(role ValRole, user *models.Player) {
 				removeUser(controllers, user)
 				switch role {
 				case Initiator:
 					if !contains(initiators, user) {
-						logWithArgs("CONTROLLER: Placing %v on %v", user.nick, role.getName())
 						initiators = append(initiators, user)
 					}
 				case Duelist:
 					if !contains(duelists, user) {
-						logWithArgs("CONTROLLER: Placing %v on %v", user.nick, role.getName())
 						duelists = append(duelists, user)
 					}
 				case Sentinel:
 					if !contains(sentinels, user) {
-						logWithArgs("CONTROLLER: Placing %v on %v", user.nick, role.getName())
 						sentinels = append(sentinels, user)
 					}
 				}
@@ -106,20 +101,17 @@ func createTeams(controllers []discordUser, initiators []discordUser, sentinels 
 		}
 
 		//Now we check on duelists
-		logWithArgs("Total Duelists %v", len(duelists))
 		if len(duelists) > 2 {
 			//Wow, more duelists than needed? _shocked_
-			randomSortAndShuffleToNew(duelists, func(role ValRole, user discordUser) {
+			randomSortAndShuffleToNew(duelists, func(role ValRole, user *models.Player) {
 				removeUser(duelists, user)
 				switch role {
 				case Initiator:
 					if !contains(initiators, user) {
-						logWithArgs("DUELIST: Placing %v on %v", user.nick, role.getName())
 						initiators = append(initiators, user)
 					}
 				case Sentinel:
 					if !contains(sentinels, user) {
-						logWithArgs("DUELIST: Placing %v on %v", user.nick, role.getName())
 						sentinels = append(sentinels, user)
 					}
 				}
@@ -135,13 +127,11 @@ func createTeams(controllers []discordUser, initiators []discordUser, sentinels 
 		}
 
 		//Finally, sentinels
-		logWithArgs("Total Sentinels %v", len(sentinels))
 		if len(sentinels) > 2 {
-			randomSortAndShuffleToNew(sentinels, func(role ValRole, user discordUser) {
+			randomSortAndShuffleToNew(sentinels, func(role ValRole, user *models.Player) {
 				removeUser(sentinels, user)
 				switch role {
 				case Initiator:
-					logWithArgs("SENTINEL: Placing %v on %v", user.nick, role.getName())
 					if !contains(initiators, user) {
 						initiators = append(initiators, user)
 					}
@@ -155,8 +145,6 @@ func createTeams(controllers []discordUser, initiators []discordUser, sentinels 
 			//Otherwise, in this case, it doesn't matter which team they go to
 		}
 	}
-
-	logWithArgs("Total Initiators %v", len(initiators))
 
 	//OK, initiators. These are easier as they should've been already filtered out through everything above
 	team1, team2 = randomSort(initiators, team1, team2)
@@ -177,7 +165,6 @@ func createTeams(controllers []discordUser, initiators []discordUser, sentinels 
 	return randomSort(allPlayers, team1, team2)
 }
 
-func addPlayerToTeam(team []discordUser, user discordUser) []discordUser {
-	user.hasTeam = true
+func addPlayerToTeam(team []*models.Player, user *models.Player) []*models.Player {
 	return append(team, user)
 }

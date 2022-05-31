@@ -36,7 +36,7 @@ func deleteMessage(channel, id string, ttl time.Duration) {
 
 func deleteMessagesBulk(msgIdsToRemove []string, channel string) {
 	go func() {
-		time.Sleep(5 * time.Minute)
+		time.Sleep(1 * time.Minute)
 		msgIdsToRemove = append(msgIdsToRemove, sendMessage("Deleting system messages", channel))
 		var removedCleaned []string
 

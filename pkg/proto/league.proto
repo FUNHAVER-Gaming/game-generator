@@ -1,18 +1,48 @@
-syntax="proto3";
-option go_package="./proto";
+syntax = "proto3";
+option go_package = "../proto";
 
 service LeagueService {
-  rpc CreateGame()
+  rpc CreateGame(CreateGameRequest) returns (CreateGameResponse) {}
+  rpc CreatePlayer(CreatePlayerRequest) returns (CreatePlayerResponse) {}
 }
 
 message CreateGameRequest {
-  string channel_id = 1;
-  string author = 2;
-  repeated VoiceChannelMember voice_channel_members = 3;
+  repeated VoiceChannelMember voice_channel_members = 1;
+  string voice_channel_id = 2;
+}
+
+message CreateGameResponse {
+  bool ok = 1;
+  string error = 2;
+  repeated Player attackers = 3;
+  repeated Player defenders = 4;
+  string map = 5;
+  Player lobby_leader = 6;
+  string game_id = 7;
+  uint32 excess_players_removed = 8;
+  repeated Player removed_players = 9;
+}
+
+message CreatePlayerRequest {
+  Player player = 1;
+}
+
+message CreatePlayerResponse {
+  string user_id = 1;
 }
 
 message VoiceChannelMember {
   string id = 1;
   string username = 2;
-  optional string nickname = 3;
+  repeated string roles = 3;
+  string display_name = 4;
+}
+
+message Player {
+  string discord_id = 1;
+  string display_name = 2;
+  string user_id = 3;
+  string riot_id = 4;
+  string riot_tag = 5;
+  repeated string roles = 6;
 }

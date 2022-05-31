@@ -1,6 +1,8 @@
 package service
 
-func remove(s []discordUser, i int) []discordUser {
+import "github.com/FUNHAVER-Gaming/game-generator/pkg/models"
+
+func remove(s []*models.Player, i int) []*models.Player {
 	s[i] = s[len(s)-1]
 	return s[:len(s)-1]
 }
@@ -10,10 +12,10 @@ func removeStringFromSlice(s []string, i int) []string {
 	return s[:len(s)-1]
 }
 
-func removeUser(s []discordUser, e discordUser) []discordUser {
+func removeUser(s []*models.Player, e *models.Player) []*models.Player {
 	indexToRemove := -1
 	for index, a := range s {
-		if a.userId == e.userId && a.nick == e.nick {
+		if a.UserID == e.UserID {
 			indexToRemove = index
 			break
 		}
@@ -26,20 +28,11 @@ func removeUser(s []discordUser, e discordUser) []discordUser {
 	return remove(s, indexToRemove)
 }
 
-func contains(s []discordUser, e discordUser) bool {
+func contains(s []*models.Player, e *models.Player) bool {
 	for _, a := range s {
-		if a.userId == e.userId && a.nick == e.nick {
+		if a.UserID == e.UserID {
 			return true
 		}
 	}
 	return false
-}
-
-func isOnTeam(e discordUser) bool {
-	return e.hasTeam
-}
-
-func removeRole(s []string, i int) []string {
-	s[i] = s[len(s)-1]
-	return s[:len(s)-1]
 }

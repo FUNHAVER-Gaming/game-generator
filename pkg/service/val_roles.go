@@ -1,5 +1,7 @@
 package service
 
+import "github.com/FUNHAVER-Gaming/game-generator/pkg/consts"
+
 type ValRole int
 
 const (
@@ -18,13 +20,13 @@ const (
 func (vr ValRole) getRoleId() string {
 	switch vr {
 	case Initiator:
-		return "978812462730207242"
+		return consts.InitiatorRoleId
 	case Controller:
-		return "978812366454136832"
+		return consts.ControllerRoleId
 	case Sentinel:
-		return "978812511451250718"
+		return consts.SentinelRoleId
 	case Duelist:
-		return "978812420040573039"
+		return consts.DuelistRoleId
 	}
 	return ""
 }
@@ -45,13 +47,13 @@ func (vr ValRole) getName() string {
 
 func getValRoleFromRoleID(roleId string) ValRole {
 	switch roleId {
-	case "978812366454136832":
+	case consts.ControllerRoleId:
 		return Controller
-	case "978812462730207242":
+	case consts.InitiatorRoleId:
 		return Initiator
-	case "978812420040573039":
+	case consts.DuelistRoleId:
 		return Duelist
-	case "978812511451250718":
+	case consts.SentinelRoleId:
 		return Sentinel
 	}
 	return InvalidRole
