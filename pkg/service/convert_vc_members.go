@@ -127,14 +127,16 @@ func convertVCMembersToUsers(request *models.NewGame, msgIdsToRemove []string, c
 		logWithArgs("Names removed %v", namesRemoved)
 		logWithArgs("All Players len %v", len(allPlayers))
 
-		for index, a := range allPlayers {
-			for _, r := range namesRemoved {
-				if r == a.nick {
-					logWithArgs("Removing user %v", r)
+		for _, n := range namesRemoved {
+			for index, a := range allPlayers {
+				if a.nick == n {
+					logWithArgs("Removing player %v", n)
 					allPlayers = remove(allPlayers, index)
+					break
 				}
 			}
 		}
+
 		//Look, this isn't probably the best way of doing this, but lets be real, they are tiny objects
 		//And their len will never be insane, this may take an extra 20ms or so, but I know its robust
 
