@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 )
@@ -19,7 +20,7 @@ func createTeams(controllers []discordUser, initiators []discordUser, sentinels 
 	//Team making logic
 	if totalInitiator == OptimalInitiator && totalController == OptimalController && totalDuelist == OptimalDuelist && totalSentinel == OptimalSentinel {
 		//Wow, this will never happen.
-
+		fmt.Println("Perfecto")
 		team1 = addPlayerToTeam(team1, controllers[0])
 		team2 = addPlayerToTeam(team2, controllers[1])
 
@@ -46,7 +47,9 @@ func createTeams(controllers []discordUser, initiators []discordUser, sentinels 
 
 		//If we have an excess of controllers, lets go ahead the fill controller teams, and move them to their secondary choice
 		if len(controllers) > 2 {
+			fmt.Println(">2 controllers")
 			randomSortAndShuffleToNew(controllers, func(role ValRole, user discordUser) {
+				logWithArgs("Placing %v on %v", user.nick, role.getRoleId())
 				switch role {
 				case Initiator:
 					initiators = append(initiators, user)
@@ -97,6 +100,7 @@ func createTeams(controllers []discordUser, initiators []discordUser, sentinels 
 		if len(duelists) > 2 {
 			//Wow, more duelists than needed? _shocked_
 			randomSortAndShuffleToNew(duelists, func(role ValRole, user discordUser) {
+				logWithArgs("DUELIST: Placing %v on %v", user.nick, role.getRoleId())
 				switch role {
 				case Initiator:
 					initiators = append(initiators, user)
@@ -117,6 +121,7 @@ func createTeams(controllers []discordUser, initiators []discordUser, sentinels 
 		//Finally, sentinels
 		if len(sentinels) > 2 {
 			randomSortAndShuffleToNew(sentinels, func(role ValRole, user discordUser) {
+				logWithArgs("SENTINEL: Placing %v on %v", user.nick, role.getRoleId())
 				switch role {
 				case Initiator:
 					initiators = append(initiators, user)
