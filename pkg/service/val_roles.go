@@ -29,6 +29,20 @@ func (vr ValRole) getRoleId() string {
 	return ""
 }
 
+func (vr ValRole) getName() string {
+	switch vr {
+	case Initiator:
+		return "Initiator"
+	case Controller:
+		return "Controller"
+	case Sentinel:
+		return "Sentinel"
+	case Duelist:
+		return "Duelist"
+	}
+	return ""
+}
+
 func getValRoleFromRoleID(roleId string) ValRole {
 	switch roleId {
 	case "978812366454136832":
