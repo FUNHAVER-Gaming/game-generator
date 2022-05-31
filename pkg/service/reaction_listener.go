@@ -30,10 +30,15 @@ func addTagEd(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 	}
 
 	newRoles := append(member.Roles, tagEdRoleId)
+
+	_ = s.State.MemberAdd(member)
+
 	err = s.GuildMemberEdit(GuildID, m.UserID, newRoles)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println(err.Error())
+		return
 	}
+
 }
 
 func onReact(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
@@ -62,6 +67,7 @@ func onReact(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 	if err != nil {
 		fmt.Println(err)
 	}
+	_ = s.State.MemberAdd(member)
 }
 
 func offReact(s *discordgo.Session, m *discordgo.MessageReactionRemove) {
@@ -95,5 +101,6 @@ func offReact(s *discordgo.Session, m *discordgo.MessageReactionRemove) {
 	if err != nil {
 		fmt.Println(err)
 	}
+	_ = s.State.MemberAdd(member)
 
 }
