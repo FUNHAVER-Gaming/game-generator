@@ -49,14 +49,23 @@ func createTeams(controllers []discordUser, initiators []discordUser, sentinels 
 		if len(controllers) > 2 {
 			fmt.Println(">2 controllers")
 			randomSortAndShuffleToNew(controllers, func(role ValRole, user discordUser) {
-				logWithArgs("Placing %v on %v", user.nick, role.getName())
+				removeUser(controllers, user)
 				switch role {
 				case Initiator:
-					initiators = append(initiators, user)
+					if !contains(initiators, user) {
+						logWithArgs("CONTROLLER: Placing %v on %v", user.nick, role.getName())
+						initiators = append(initiators, user)
+					}
 				case Duelist:
-					duelists = append(duelists, user)
+					if !contains(duelists, user) {
+						logWithArgs("CONTROLLER: Placing %v on %v", user.nick, role.getName())
+						duelists = append(duelists, user)
+					}
 				case Sentinel:
-					sentinels = append(sentinels, user)
+					if !contains(sentinels, user) {
+						logWithArgs("CONTROLLER: Placing %v on %v", user.nick, role.getName())
+						sentinels = append(sentinels, user)
+					}
 				}
 			}, team1, team2)
 		} else {
@@ -101,12 +110,18 @@ func createTeams(controllers []discordUser, initiators []discordUser, sentinels 
 		if len(duelists) > 2 {
 			//Wow, more duelists than needed? _shocked_
 			randomSortAndShuffleToNew(duelists, func(role ValRole, user discordUser) {
-				logWithArgs("DUELIST: Placing %v on %v", user.nick, role.getName())
+				removeUser(duelists, user)
 				switch role {
 				case Initiator:
-					initiators = append(initiators, user)
+					if !contains(initiators, user) {
+						logWithArgs("DUELIST: Placing %v on %v", user.nick, role.getName())
+						initiators = append(initiators, user)
+					}
 				case Sentinel:
-					sentinels = append(sentinels, user)
+					if !contains(sentinels, user) {
+						logWithArgs("DUELIST: Placing %v on %v", user.nick, role.getName())
+						sentinels = append(sentinels, user)
+					}
 				}
 			}, team1, team2)
 		} else {
@@ -120,13 +135,16 @@ func createTeams(controllers []discordUser, initiators []discordUser, sentinels 
 		}
 
 		//Finally, sentinels
-		logWithArgs("Total Duelists %v", len(sentinels))
+		logWithArgs("Total Sentinels %v", len(sentinels))
 		if len(sentinels) > 2 {
 			randomSortAndShuffleToNew(sentinels, func(role ValRole, user discordUser) {
+				removeUser(sentinels, user)
 				switch role {
 				case Initiator:
 					logWithArgs("SENTINEL: Placing %v on %v", user.nick, role.getName())
-					initiators = append(initiators, user)
+					if !contains(initiators, user) {
+						initiators = append(initiators, user)
+					}
 				}
 			}, team1, team2)
 		} else {
@@ -138,7 +156,7 @@ func createTeams(controllers []discordUser, initiators []discordUser, sentinels 
 		}
 	}
 
-	logWithArgs("Total Duelists %v", len(initiators))
+	logWithArgs("Total Initiators %v", len(initiators))
 
 	//OK, initiators. These are easier as they should've been already filtered out through everything above
 	team1, team2 = randomSort(initiators, team1, team2)
@@ -160,5 +178,6 @@ func createTeams(controllers []discordUser, initiators []discordUser, sentinels 
 }
 
 func addPlayerToTeam(team []discordUser, user discordUser) []discordUser {
+	user.hasTeam = true
 	return append(team, user)
 }

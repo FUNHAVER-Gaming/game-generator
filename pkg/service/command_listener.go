@@ -22,9 +22,10 @@ func init() {
 }
 
 type discordUser struct {
-	userId string
-	nick   string
-	roles  []string
+	userId  string
+	nick    string
+	roles   []string
+	hasTeam bool
 }
 
 func newGameHandler(w http.ResponseWriter, req *http.Request) {

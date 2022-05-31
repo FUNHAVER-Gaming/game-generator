@@ -37,11 +37,7 @@ func randomSort(base []discordUser, team1 []discordUser, team2 []discordUser) ([
 	})
 
 	for _, user := range base {
-		if contains(team1, user) {
-			continue
-		}
-
-		if contains(team2, user) {
+		if isOnTeam(user) {
 			continue
 		}
 
