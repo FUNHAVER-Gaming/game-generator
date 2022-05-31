@@ -38,57 +38,52 @@ func convertVCMembersToUsers(request *models.NewGame, msgIdsToRemove []string, c
 		discUser := discordUser{
 			userId: user.User.ID,
 			nick:   user.User.Username,
+			roles:  user.Roles,
 		}
 
-		hasValRole := false
-		if len(user.Roles) >= 2 {
-			for _, r := range user.Roles {
-				if r == ModRoleID {
-					continue
-				}
+		role := InvalidRole
+		obs := false
 
-				valRole := getValRoleFromRoleID(r)
-				if valRole == -1 {
-					continue
-				}
-
-				hasValRole = true
-				switch valRole {
-				case Initiator:
-					flex = append(flex, discUser)
-				case Sentinel:
-					sentinels = append(sentinels, discUser)
-				case Controller:
-					controllers = append(controllers, discUser)
-				case Duelist:
-					duelists = append(duelists, discUser)
-				}
-			}
-		} else if len(user.Roles) == 1 {
-			valRole := getValRoleFromRoleID(user.Roles[0])
-			if valRole == -1 {
-				sendError(fmt.Sprintf("Member %v, does not have a valid valorant role", user.User.Username), channel)
+		for _, r := range user.Roles {
+			if r == ModRoleID {
 				continue
 			}
 
-			hasValRole = true
-			switch valRole {
-			case Initiator:
-				flex = append(flex, discUser)
-			case Sentinel:
-				sentinels = append(sentinels, discUser)
-			case Controller:
-				controllers = append(controllers, discUser)
-			case Duelist:
-				duelists = append(duelists, discUser)
+			if r == ObserverRoleID {
+				obs = true
+				break
 			}
+
+			role = getValRoleFromRoleID(r)
+
+			if role == InvalidRole {
+				continue
+			}
+
+			break
 		}
 
-		if !hasValRole {
-			sendError(fmt.Sprintf("Member %v, does not have a valid valorant role, adding him anyway", user.User.Username), channel)
+		if role == InvalidRole && !obs {
+			sendError(fmt.Sprintf("Member %v, does not have a valid valorant role", user.User.Username), channel)
+			continue
 		}
 
-		allPlayers = append(allPlayers, discUser)
+		switch role {
+		case Initiator:
+			flex = append(flex, discUser)
+		case Sentinel:
+			sentinels = append(sentinels, discUser)
+		case Controller:
+			controllers = append(controllers, discUser)
+		case Duelist:
+			duelists = append(duelists, discUser)
+		}
+
+		if !obs {
+			allPlayers = append(allPlayers, discUser)
+		} else {
+			sendMessage(fmt.Sprintf("%v has Observer / Caster Role, and was taken into consideration for team gen", discUser.nick), channel)
+		}
 	}
 
 	if len(allPlayers) > 10 {

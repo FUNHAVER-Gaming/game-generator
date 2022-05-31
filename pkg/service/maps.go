@@ -14,12 +14,13 @@ var (
 		"fracture",
 		"haven",
 		"ascent",
+		"breeze",
 	}
 	playedMaps = map[string][]string{}
 )
 
 func chooseMap(channel string) string {
-	r := rand.New(rand.NewSource(time.Now().Unix()))
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	var tempMaps []string
 	tempMaps = append(tempMaps, maps...)
 	pm := playedMaps[channel]

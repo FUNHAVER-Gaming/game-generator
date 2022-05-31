@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"math/rand"
 )
 
@@ -18,23 +17,16 @@ func randomSortAndShuffleToNew(baseList []discordUser, roleFunc func(role ValRol
 	remove(baseList, 0)
 
 	//Assign to secondary roles
-	for _, user := range baseList {
-		member, err := getMember(user.userId)
-
-		if err != nil {
-			fmt.Println("Error getting guild member: " + err.Error())
-			return
-		}
-
-		roles := member.Roles
+	for _, member := range baseList {
+		roles := member.roles
 
 		for _, role := range roles {
 			//Remove any non valorant based roles
-			if getValRoleFromRoleID(role) == -1 {
+			if getValRoleFromRoleID(role) == InvalidRole {
 				continue
 			}
 			vr := getValRoleFromRoleID(role)
-			roleFunc(vr, user)
+			roleFunc(vr, member)
 		}
 	}
 }
