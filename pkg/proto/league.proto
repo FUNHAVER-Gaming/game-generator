@@ -1,0 +1,18 @@
+syntax="proto3";
+option go_package="./proto";
+
+service LeagueService {
+  rpc CreateGame()
+}
+
+message CreateGameRequest {
+  string channel_id = 1;
+  string author = 2;
+  repeated VoiceChannelMember voice_channel_members = 3;
+}
+
+message VoiceChannelMember {
+  string id = 1;
+  string username = 2;
+  optional string nickname = 3;
+}

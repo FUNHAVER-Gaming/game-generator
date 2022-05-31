@@ -22,7 +22,7 @@ func convertVCMembersToUsers(request *models.NewGame, msgIdsToRemove []string, c
 	msgIdsToRemove = append(msgIdsToRemove, sendMessage(fmt.Sprintf("Found %v total VC members", len(vcMembers)), channel))
 
 	for index, mem := range vcMembers {
-		if mem == JoviPCUserId {
+		if mem == JoviPcUserId {
 			vcMembers = removeStringFromSlice(vcMembers, index)
 		}
 	}
@@ -123,6 +123,9 @@ func convertVCMembersToUsers(request *models.NewGame, msgIdsToRemove []string, c
 			toRemoveFrom = remove(toRemoveFrom, index)
 			namesRemoved = append(namesRemoved, playerToRemove.nick)
 		}
+
+		logWithArgs("Names removed %v", namesRemoved)
+		logWithArgs("All Players len %v", len(allPlayers))
 
 		//Look, this isn't probably the best way of doing this, but lets be real, they are tiny objects
 		//And their len will never be insane, this may take an extra 20ms or so, but I know its robust

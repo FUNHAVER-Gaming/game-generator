@@ -1,14 +1,44 @@
 package service
 
-const (
-	JoviPCUserId   = "910342510600151050"
-	GuildID        = "978805942122602556"
-	DiscordToken   = "OTc4ODEzMDg3ODA3MzA3ODE2.GBwsSE.8aHPukkL0z0ltGujudjJmtf1gMuwXEFY0mk1FU"
-	Game1ID        = "978808082123604078"
-	Game2ID        = "978808103942357022"
-	Game3ID        = "978808171726508052"
-	Game4ID        = "978808119025082398"
-	Game5ID        = "978808224134332467"
-	ModRoleID      = "978896260687859733"
-	ObserverRoleID = "980758639457501214"
+import (
+	"fmt"
+	"github.com/joho/godotenv"
+	"os"
 )
+
+const (
+	JoviPcUserId = "910342510600151050"
+)
+
+var (
+	isProduction = false
+)
+
+func init() {
+	file, err := os.Open("../../dev.env")
+	if err != nil {
+		file, err = os.Open("../../prod.env")
+		if err != nil {
+			fmt.Println("Failed to find any .env file, failing")
+			os.Exit(-1)
+			return
+		}
+		fmt.Println("Did not find dev.env, using production server values")
+		isProduction = true
+	}
+
+	if file == nil {
+		fmt.Println("No .env file found, failing")
+		os.Exit(-1)
+		return
+	}
+
+	err = godotenv.Load(file.Name())
+
+	if file == nil {
+		fmt.Println(fmt.Sprintf("Failed to load env file %v", err.Error()))
+		os.Exit(-1)
+		return
+	}
+
+}
