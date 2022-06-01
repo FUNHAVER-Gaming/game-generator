@@ -51,3 +51,10 @@ func randomSort(base []*models.Player, team1 []*models.Player, team2 []*models.P
 	}
 	return team1, team2
 }
+
+func shuffleSlice(base []*models.Player) []*models.Player {
+	rand.Shuffle(len(base), func(i, j int) {
+		base[i], base[j] = base[j], base[i]
+	})
+	return base
+}

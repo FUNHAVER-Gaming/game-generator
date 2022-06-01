@@ -4,6 +4,7 @@ option go_package = "../proto";
 service LeagueService {
   rpc CreateGame(CreateGameRequest) returns (CreateGameResponse) {}
   rpc CreatePlayer(CreatePlayerRequest) returns (CreatePlayerResponse) {}
+  rpc FinishGame(FinishGameRequest) returns (FinishGameResponse) {}
 }
 
 message CreateGameRequest {
@@ -29,6 +30,15 @@ message CreatePlayerRequest {
 
 message CreatePlayerResponse {
   string user_id = 1;
+}
+
+message FinishGameRequest {
+  string game_id = 1;
+  Player lobby_leader = 2;
+}
+
+message FinishGameResponse {
+
 }
 
 message VoiceChannelMember {

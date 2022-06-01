@@ -103,6 +103,8 @@ func convertVCMembersToUsers(request *proto.CreateGameRequest) (*vcMembersResp, 
 			toRemoveFrom = possibles
 		}
 
+		toRemoveFrom = shuffleSlice(toRemoveFrom)
+
 		for i := 0; i < playersToRemove; i++ {
 			index := r.Intn(len(toRemoveFrom) - 1)
 			playerToRemove := toRemoveFrom[index]
@@ -122,6 +124,7 @@ func convertVCMembersToUsers(request *proto.CreateGameRequest) (*vcMembersResp, 
 				RiotId:      playerToRemove.RiotId,
 				RiotTag:     playerToRemove.RiotTag,
 			})
+			toRemoveFrom = shuffleSlice(toRemoveFrom)
 		}
 	}
 
