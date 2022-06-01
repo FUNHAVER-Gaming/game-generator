@@ -8,10 +8,10 @@ import (
 
 var (
 	playerCache = ttlcache.New[string, *models.Player](
-		ttlcache.WithTTL[string, string](2 * time.Hour),
+		ttlcache.WithTTL[string, *models.Player](2 * time.Hour),
 	)
 	discordToPlayerCache = ttlcache.New[string, *models.Player](
-		ttlcache.WithTTL[string, string](2 * time.Hour),
+		ttlcache.WithTTL[string, *models.Player](2 * time.Hour),
 	)
 )
 

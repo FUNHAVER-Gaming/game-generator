@@ -1,10 +1,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"github.com/FUNHAVER-Gaming/game-generator/pkg/data"
+	"github.com/FUNHAVER-Gaming/game-generator/pkg/consts"
+	"github.com/FUNHAVER-Gaming/game-generator/pkg/proto"
 	"github.com/joho/godotenv"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"os"
+	"time"
 )
 
 func main() {
@@ -17,45 +22,24 @@ func main() {
 	if err != nil {
 		panic(err.Error())
 	}
-	//
-	//host := os.Getenv("HOST")
-	//database := os.Getenv("DATABASE")
-	//user := os.Getenv("USER")
-	//port := os.Getenv("PORT")
-	//password := os.Getenv("PASSWORD")
 
-	err = data.Setup(os.Getenv("CONNECTION_STRING"))
-
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	conn, err := grpc.DialContext(ctx, "localhost:5501", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
-
-	//player, err := data.SavePlayer(&models.DiscordUser{
-	//	UserID:      "123456789112345678",
-	//	DisplayName: "MrFunHaver",
-	//	Roles:       []string{consts.DuelistRoleId, consts.ObserverRoleId, consts.ModRoleId},
-	//}, "MrFunHaver#350", 100)
-	//
-	//if err != nil {
-	//	panic(err.Error())
-	//}
-	//
-	//fmt.Println(player.UserID)
-	//
-	//player, err = data.GetPlayer(player.UserID)
-	//if err != nil {
-	//	panic(err.Error())
-	//}
-	//
-	//fmt.Println(player.DiscordUserName)
-	//mpY4ZinM2E-VIdR1CA6Jg
-
-	player, err := data.GetPlayer("W37Yb3oaYj-tdqRteoySB")
+	client := proto.NewLeagueServiceClient(conn)
+	resp, err := client.CreatePlayer(ctx, &proto.CreatePlayerRequest{Player: &proto.Player{
+		DiscordId:   "1234",
+		DisplayName: "MrFunHaver",
+		RiotId:      "4567",
+		RiotTag:     "MrFunHaver#350",
+		Roles:       []string{consts.InitiatorRoleId},
+	}})
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
-
-	fmt.Println(player.DiscordUserName)
-
+	fmt.Println(resp.UserId)
 	return
 }

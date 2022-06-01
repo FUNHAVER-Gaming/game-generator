@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"github.com/FUNHAVER-Gaming/game-generator/pkg/health"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gorilla/mux"
@@ -19,7 +18,7 @@ var (
 func Setup() {
 	go func() {
 		log.Info("Starting gRPC (no error next means good)")
-		err := StartServer(199091)
+		err := StartServer(5501)
 		if err != nil {
 			log.WithError(err).Error("could not start grpc server")
 			return
@@ -38,7 +37,7 @@ func Setup() {
 			ReadTimeout:  15 * time.Second,
 		}
 
-		fmt.Println("Serving REST server")
+		log.Info("Serving REST server")
 		log.Fatal(srv.ListenAndServe())
 	}()
 
@@ -46,5 +45,5 @@ func Setup() {
 	signal.Notify(stop, os.Interrupt)
 	<-stop
 
-	fmt.Println("Gracefully shutting down")
+	log.Info("Gracefully shutting down")
 }

@@ -1,7 +1,6 @@
 package data
 
 import (
-	"fmt"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
@@ -61,7 +60,6 @@ func getAsync(dest interface{}, query string, inputs ...interface{}) error {
 }
 
 func execAsync(query string, inputs ...interface{}) error {
-	fmt.Println(fmt.Sprintf("QUERY %v, Values %v", query, inputs))
 	errChan := make(chan error)
 
 	go func(c chan error) {
